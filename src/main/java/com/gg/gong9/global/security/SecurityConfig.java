@@ -1,4 +1,4 @@
-package com.gg.gong9.global.config;
+package com.gg.gong9.global.security;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
