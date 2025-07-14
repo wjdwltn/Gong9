@@ -6,6 +6,7 @@ import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.Where;
 
 @Entity
 @Getter
@@ -29,6 +30,8 @@ public class User extends BaseEntity {
     @Enumerated(EnumType.STRING)
     private UserRole userRole;
 
+    @Column(name = "is_deleted", nullable = false)
+    private boolean isDeleted = false;
 
     @Builder
     public User(String username, String email, String password, Address address, UserRole userRole) {
@@ -37,6 +40,20 @@ public class User extends BaseEntity {
         this.password = password;
         this.address = address;
         this.userRole = userRole;
+    }
+
+    public void updateUser(String username, String email, Address address) {
+        this.username = username;
+        this.email = email;
+        this.address = address;
+    }
+
+    public void updatePassword(String password){
+        this.password = password;
+    }
+
+    public void softDelete(){
+        this.isDeleted = true;
     }
 
 }
