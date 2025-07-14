@@ -44,4 +44,14 @@ public class GlobalExceptionHandler {
 
         return ResponseEntity.badRequest().body(error);
     }
+
+    @ExceptionHandler(BaseException.class)
+    public ResponseEntity<ErrorResponse> handleBaseException(BaseException e) {
+        ErrorResponse error = ErrorResponse.from(
+                e.getStatus().value(),
+                e.getStatus().getReasonPhrase(),
+                e.getMessage()
+        );
+        return ResponseEntity.status(e.getStatus()).body(error);
+    }
 }
