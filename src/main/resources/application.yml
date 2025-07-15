@@ -18,3 +18,7 @@ logging:
   level:
     ROOT: INFO
     org.springframework.web.filter.CommonsRequestLoggingFilter: DEBUG
+
+jwt:
+  secret: Z9tq!82uFg$1vNhK@Lp7wXc#zM4rB2eT
+  expiration: 86400000
