@@ -1,6 +1,18 @@
 package com.gg.gong9.user.entity;
 
+import lombok.Getter;
+
+@Getter
 public enum UserRole {
-    USER,
-    ADMIN
+
+    USER("ROLE_USER"),
+    ADMIN("ROLE_ADMIN")
+    ;
+
+    private final String name;
+
+    UserRole(String name) {
+        this.name = name;
+    }
+
 }

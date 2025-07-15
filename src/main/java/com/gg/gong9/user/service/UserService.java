@@ -2,6 +2,7 @@ package com.gg.gong9.user.service;
 
 import com.gg.gong9.global.exception.ExceptionMessage;
 import com.gg.gong9.global.exception.exceptions.UserException;
+import com.gg.gong9.global.security.jwt.JwtTokenProvider;
 import com.gg.gong9.user.controller.dto.*;
 import com.gg.gong9.user.entity.User;
 import com.gg.gong9.user.entity.UserRole;
@@ -17,6 +18,7 @@ public class UserService {
 
     private final UserRepository userRepository;
     private final BCryptPasswordEncoder bCryptPasswordEncoder;
+    private final JwtTokenProvider jwtTokenProvider;
 
     //회원가입
     public UserResponse join(JoinRequest joinRequest){
@@ -36,13 +38,16 @@ public class UserService {
     }
 
     //로그인
-    public UserResponse login(LoginRequest loginRequest){
+    public LoginResponse login(LoginRequest loginRequest){
 
         User user = findByEmailOrThrow(loginRequest.email());
 
         validatePasswordOrThrow(loginRequest.password(), user.getPassword());
 
-        return new UserResponse(user.getId());
+        //JWT 토근 생성
+        String accessToken = jwtTokenProvider.createToken(user);
+
+        return new LoginResponse(user.getId(), accessToken);
     }
 
     //회원 정보 조회
@@ -53,16 +58,14 @@ public class UserService {
     //회원 정보 수정
     @Transactional
     public void updateUser(long userId, UpdateUserRequest updateUserReq){
-
         User user = findByIdOrThrow(userId);
 
-        user.updateUser(updateUserReq.username(), updateUserReq.email(), updateUserReq.toAddress());
+        user.updateUser(updateUserReq.username(), updateUserReq.toAddress());
     }
 
     //비밀번호 변경
     @Transactional
     public void updatePassword(long userId, ChangePasswordRequest changePasswordReq){
-
         User user = findByIdOrThrow(userId);
 
         validatePasswordOrThrow(changePasswordReq.currentPassword(), user.getPassword());
@@ -74,7 +77,6 @@ public class UserService {
     //회원 탈퇴
     @Transactional
     public void deleteUser(long userId){
-
         User user = findByIdOrThrow(userId);
 
         user.softDelete();
