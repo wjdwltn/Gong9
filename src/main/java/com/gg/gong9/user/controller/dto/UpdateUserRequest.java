@@ -7,12 +7,6 @@ import org.hibernate.validator.constraints.Length;
 public record UpdateUserRequest(
 
         @NotNull
-        String email,
-
-        @NotNull
-        String password,
-
-        @NotNull
         @Length(min = 3, max = 20, message = "3~20 글자로 작성해주세요.")
         String username,
 
@@ -23,6 +17,6 @@ public record UpdateUserRequest(
         String detail
 ) {
         public Address toAddress() {
-                return new Address(postcode, email);
+                return new Address(postcode, detail);
         }
 }
