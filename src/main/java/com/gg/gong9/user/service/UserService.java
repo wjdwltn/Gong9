@@ -1,7 +1,6 @@
 package com.gg.gong9.user.service;
 
-import com.gg.gong9.auth.controller.dto.EmailVerificationRequest;
-import com.gg.gong9.auth.controller.dto.PasswordResetRequest;
+import com.gg.gong9.auth.controller.dto.*;
 import com.gg.gong9.auth.repository.VerificationCodeRepository;
 import com.gg.gong9.global.exception.ExceptionMessage;
 import com.gg.gong9.global.exception.exceptions.UserException;
@@ -18,7 +17,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
-import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -32,6 +30,7 @@ public class UserService {
 
     private static final long CODE_TTL = 300; //5분
     private static final String VERIFICATION_CODE_PREFIX = "verificationCode:";
+    private static final String PASSWORD_RESET_CODE_PREFIX = "passwordResetCode:";
 
     //회원가입
     public UserResponse join(JoinRequest joinRequest){
@@ -87,8 +86,16 @@ public class UserService {
 
     }
 
+    //회원 탈퇴
+    @Transactional
+    public void deleteUser(long userId){
+        User user = findByIdOrThrow(userId);
+
+        user.softDelete();
+    }
+
     //이메일 인증 번호 요청
-    public void sendCodeToMail(EmailSendRequest request){
+    public void sendEmailCode(EmailRequest request){
         String verificationCode = createVerificationCode();
 
         saveVerificationCode(VERIFICATION_CODE_PREFIX, request.email(), verificationCode, CODE_TTL);
@@ -100,16 +107,39 @@ public class UserService {
     }
 
     //이메일 인증 코드 확인
-    public void verifyCode(EmailVerificationRequest request){
-        String key = VERIFICATION_CODE_PREFIX + request.email();
-        String storedCode = verificationCodeRepository.getCode(key)
-                .orElseThrow(()->new IllegalStateException("유효하지 않은 인증 코드입니다."));
+    public void verifyEmailCode(EmailCheckRequest request){
+        verifyCode(VERIFICATION_CODE_PREFIX, request.email(), request.code());
+    }
 
-        if (!storedCode.equals(request.code())) {
-            throw new IllegalStateException("인증 코드가 일치하지 않습니다.");
+    //비밀번호 재설정 요청
+    public void sendPasswordResetCode(PasswordResetRequest request){
+        if(!userRepository.existsByEmail(request.email())){
+            throw new IllegalStateException("해당 이메일로 등록된 계정이 없습니다.");
         }
 
-        verificationCodeRepository.deleteCode(key);
+        String resetCode = createVerificationCode();
+
+        saveVerificationCode(PASSWORD_RESET_CODE_PREFIX, request.email(), resetCode, CODE_TTL);
+
+        String title = "비밀번호 재설정 코드";
+        String content = "아래 인증 코드를 입력하여 비밀번호를 재설정하세요.\n\n재설정 코드: {code}";
+
+        sendEmailWithCode(request.email(), title, content, resetCode);
+
+    }
+
+    //비밀번호 재설정 인증 코드 확인
+    public void verifyPasswordResetCode(PasswordResetCheckRequest request){
+        verifyCode(PASSWORD_RESET_CODE_PREFIX, request.email(), request.code());
+    }
+
+    //비밀번호 재설정
+    @Transactional
+    public void resetPassword(PasswordResetConfirmRequest request){
+
+        User user = findByEmailOrThrow(request.email());
+
+        user.updatePassword(bCryptPasswordEncoder.encode(request.newPassword()));
     }
 
     //인증번호 생성
@@ -139,13 +169,18 @@ public class UserService {
         mailService.sendEmail(email, title, body);
     }
 
-    //회원 탈퇴
-    @Transactional
-    public void deleteUser(long userId){
-        User user = findByIdOrThrow(userId);
+    public void verifyCode(String keyPrefix, String email, String code){
+        String key = keyPrefix + email;
+        String storedCode = verificationCodeRepository.getCode(key)
+                .orElseThrow(()->new IllegalStateException("유효하지 않은 인증 코드입니다."));
 
-        user.softDelete();
+        if (!storedCode.equals(code)) {
+            throw new IllegalStateException("인증 코드가 일치하지 않습니다.");
+        }
+
+        verificationCodeRepository.deleteCode(key);
     }
+
 
 
     //검증
