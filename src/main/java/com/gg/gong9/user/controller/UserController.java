@@ -18,36 +18,36 @@ public class UserController {
 
     //회원 정보 조회
     @GetMapping("/me")
-    public ResponseEntity<?> getUser(@AuthenticationPrincipal CustomUserDetails userPrincipal) {
+    public ResponseEntity<UserDetailResponse> getUser(@AuthenticationPrincipal CustomUserDetails userPrincipal) {
         Long userId = userPrincipal.getUser().getId();
         return ResponseEntity.ok(userService.getUser(userId));
     }
 
     //회원 정보 수정
     @PatchMapping
-    public ResponseEntity<String> updateUser(@AuthenticationPrincipal CustomUserDetails userPrincipal,
+    public ResponseEntity<UserResponse> updateUser(@AuthenticationPrincipal CustomUserDetails userPrincipal,
                                              @Valid @RequestBody UpdateUserRequest updateUserRequest)
     {
         Long userId = userPrincipal.getUser().getId();
         userService.updateUser(userId, updateUserRequest);
-        return ResponseEntity.ok("회원 정보 수정 성공");
+        return ResponseEntity.ok(new UserResponse("회원 정보 수정이 완료되었습니다."));
     }
 
     //비밀번호 변경
     @PutMapping("/password")
-    public ResponseEntity<String> changePassword(@AuthenticationPrincipal CustomUserDetails userPrincipal,
+    public ResponseEntity<UserResponse> changePassword(@AuthenticationPrincipal CustomUserDetails userPrincipal,
                                                  @Valid @RequestBody ChangePasswordRequest changePasswordRequest)
     {
         Long userId = userPrincipal.getUser().getId();
         userService.updatePassword(userId, changePasswordRequest);
-        return ResponseEntity.ok("회원 비밀번호 변경 성공");
+        return ResponseEntity.ok(new UserResponse("비밀번호 변경이 완료되었습니다."));
     }
 
     // 회원 탈퇴 (Soft Delete)
     @DeleteMapping
-    public ResponseEntity<String> deleteUser(@AuthenticationPrincipal CustomUserDetails userPrincipal) {
+    public ResponseEntity<UserResponse> deleteUser(@AuthenticationPrincipal CustomUserDetails userPrincipal) {
         Long userId = userPrincipal.getUser().getId();
         userService.deleteUser(userId);
-        return ResponseEntity.ok("회원 탈퇴 성공");
+        return ResponseEntity.ok(new UserResponse("탈퇴가 완료되었습니다."));
     }
 }

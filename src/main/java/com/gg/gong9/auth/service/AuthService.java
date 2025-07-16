@@ -9,7 +9,7 @@ import com.gg.gong9.mail.service.MailService;
 import com.gg.gong9.user.controller.dto.JoinRequest;
 import com.gg.gong9.user.controller.dto.LoginRequest;
 import com.gg.gong9.user.controller.dto.LoginResponse;
-import com.gg.gong9.user.controller.dto.UserResponse;
+import com.gg.gong9.user.controller.dto.UserIdResponse;
 import com.gg.gong9.user.entity.User;
 import com.gg.gong9.user.entity.UserRole;
 import com.gg.gong9.user.repository.UserRepository;
@@ -36,7 +36,7 @@ public class AuthService {
     private static final String PASSWORD_RESET_CODE_PREFIX = "passwordResetCode:";
 
     //회원가입
-    public UserResponse join(JoinRequest joinRequest){
+    public UserIdResponse join(JoinRequest joinRequest){
         checkEmailDuplication(joinRequest.email());
 
         User user = User.builder()
@@ -48,7 +48,7 @@ public class AuthService {
                 .build();
 
         User savedUser = userRepository.save(user);
-        return new UserResponse(savedUser.getId());
+        return new UserIdResponse(savedUser.getId());
     }
 
     //로그인
