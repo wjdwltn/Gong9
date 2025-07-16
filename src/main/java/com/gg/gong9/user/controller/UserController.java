@@ -1,11 +1,9 @@
 package com.gg.gong9.user.controller;
 
+import com.gg.gong9.auth.controller.dto.EmailVerificationRequest;
 import com.gg.gong9.global.security.jwt.CustomUserDetails;
 import com.gg.gong9.user.controller.dto.*;
 import com.gg.gong9.user.service.UserService;
-import com.sun.security.auth.UserPrincipal;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -82,5 +80,17 @@ public class UserController {
         return ResponseEntity.ok("회원 탈퇴 성공");
     }
 
+    //이메일 인증번호 요청
+    @PostMapping("/emails/sendMail")
+    public ResponseEntity<String> sendMailCode(@Valid @RequestBody EmailSendRequest request){
+        userService.sendCodeToMail(request);
+        return ResponseEntity.ok("회원가입 인증번호가 발송되었습니다.");
+    }
 
+    //이메일 인증번호 확인
+    @PostMapping("/email/verifyMail")
+    public ResponseEntity<String> verifyMail(@Valid @RequestBody EmailVerificationRequest request){
+        userService.verifyCode(request);
+        return ResponseEntity.ok("회원가입 인증이 완료되었습니다.");
+    }
 }
