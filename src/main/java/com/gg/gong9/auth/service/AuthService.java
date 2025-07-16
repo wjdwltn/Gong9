@@ -3,7 +3,10 @@ package com.gg.gong9.auth.service;
 import com.gg.gong9.auth.controller.dto.*;
 import com.gg.gong9.auth.repository.VerificationCodeRepository;
 import com.gg.gong9.global.exception.ExceptionMessage;
-import com.gg.gong9.global.exception.exceptions.UserException;
+import com.gg.gong9.global.exception.exceptions.auth.AuthException;
+import com.gg.gong9.global.exception.exceptions.auth.AuthExceptionMessage;
+import com.gg.gong9.global.exception.exceptions.user.UserException;
+import com.gg.gong9.global.exception.exceptions.user.UserExceptionMessage;
 import com.gg.gong9.global.security.jwt.JwtTokenProvider;
 import com.gg.gong9.mail.service.MailService;
 import com.gg.gong9.user.controller.dto.JoinRequest;
@@ -83,7 +86,7 @@ public class AuthService {
     //비밀번호 재설정 요청
     public void sendPasswordResetCode(PasswordResetRequest request){
         if(!userRepository.existsByEmail(request.email())){
-            throw new IllegalStateException("해당 이메일로 등록된 계정이 없습니다.");
+            throw new AuthException(AuthExceptionMessage.EMAIL_NOT_FOUND);
         }
 
         String resetCode = createVerificationCode();
@@ -140,10 +143,10 @@ public class AuthService {
     public void verifyCode(String keyPrefix, String email, String code){
         String key = keyPrefix + email;
         String storedCode = verificationCodeRepository.getCode(key)
-                .orElseThrow(()->new IllegalStateException("유효하지 않은 인증 코드입니다."));
+                .orElseThrow(()->new AuthException(AuthExceptionMessage.INVALID_VERIFICATION_CODE));
 
         if (!storedCode.equals(code)) {
-            throw new IllegalStateException("인증 코드가 일치하지 않습니다.");
+            throw new AuthException(AuthExceptionMessage.VERIFICATION_CODE_NOT_MATCHED);
         }
 
         verificationCodeRepository.deleteCode(key);
@@ -153,18 +156,18 @@ public class AuthService {
 
     private User findByEmailOrThrow(String email){
         return userRepository.findByEmailAndIsDeletedFalse(email)
-                .orElseThrow(()-> new UserException(ExceptionMessage.INVALID_EMAIL));
+                .orElseThrow(()-> new UserException(UserExceptionMessage.INVALID_EMAIL));
     }
 
     public void validatePasswordOrThrow(String password, String encodedPassword){
         if (!bCryptPasswordEncoder.matches(password, encodedPassword)) {
-            throw new UserException(ExceptionMessage.INVALID_PASSWORD);
+            throw new UserException(UserExceptionMessage.INVALID_PASSWORD);
         }
     }
 
     private void checkEmailDuplication(String email) {
         if(userRepository.findByEmailAndIsDeletedFalse(email).isPresent()) {
-            throw new UserException(ExceptionMessage.ALREADY_EXIST_EMAIL);
+            throw new UserException(UserExceptionMessage.ALREADY_EXIST_EMAIL);
         }
     }
 

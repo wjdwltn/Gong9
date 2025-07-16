@@ -1,7 +1,8 @@
 package com.gg.gong9.user.service;
 
 import com.gg.gong9.global.exception.ExceptionMessage;
-import com.gg.gong9.global.exception.exceptions.UserException;
+import com.gg.gong9.global.exception.exceptions.user.UserException;
+import com.gg.gong9.global.exception.exceptions.user.UserExceptionMessage;
 import com.gg.gong9.user.controller.dto.*;
 import com.gg.gong9.user.entity.User;
 import com.gg.gong9.user.repository.UserRepository;
@@ -54,12 +55,12 @@ public class UserService {
 
     private User findByIdOrThrow(long id){
         return userRepository.findByIdAndIsDeletedFalse(id)
-                .orElseThrow(()-> new UserException(ExceptionMessage.USER_NOT_FOUND));
+                .orElseThrow(()-> new UserException(UserExceptionMessage.USER_NOT_FOUND));
     }
 
     public void validatePasswordOrThrow(String password, String encodedPassword){
         if (!bCryptPasswordEncoder.matches(password, encodedPassword)) {
-            throw new UserException(ExceptionMessage.INVALID_PASSWORD);
+            throw new UserException(UserExceptionMessage.INVALID_PASSWORD);
         }
     }
 }
