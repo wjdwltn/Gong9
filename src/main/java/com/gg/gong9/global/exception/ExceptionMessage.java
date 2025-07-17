@@ -28,6 +28,9 @@ public enum ExceptionMessage {
     //S3
     S3_UPLOAD_FAILED("S3 업로드에 실패했습니다.", HttpStatus.INTERNAL_SERVER_ERROR),
 
+    // PRODUCT
+    PRODUCT_NOT_FOUND("해당 상품이 존재하지 않습니다.", HttpStatus.NOT_FOUND);
+
     ;
 
     private final String text;

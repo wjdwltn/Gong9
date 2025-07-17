@@ -5,6 +5,11 @@ spring:
     password: ${DATABASE_PASSWORD}
     driver-class-name: ${DATABASE_DRIVER}
 
+  servlet:
+    multipart:
+      max-file-size: 50MB
+      max-request-size: 50MB
+
   jpa:
     show-sql: true
     properties:

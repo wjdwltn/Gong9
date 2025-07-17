@@ -19,4 +19,11 @@ public class ProductImg {
     private Product product;
 
     private String productImageUrl;
+
+    public static ProductImg createProductImg(Product product, String productImageUrl) {
+        ProductImg productImg = new ProductImg();
+        productImg.product = product;
+        productImg.productImageUrl = productImageUrl;
+        return productImg;
+    }
 }
