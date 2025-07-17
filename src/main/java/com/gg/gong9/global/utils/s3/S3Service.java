@@ -18,10 +18,10 @@ public class S3Service {
 
     private final AmazonS3 amazonS3;
 
-    @Value("${BUCKET_NAME}")
+    @Value("${cloud.aws.s3.bucket}")
     private String bucket;
 
-    @Value("${BASE_URL}")
+    @Value("${cloud.aws.s3.base-url}")
     private String baseUrl;
 
     public String uploadFile(String folderName, MultipartFile file) {

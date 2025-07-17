@@ -59,7 +59,7 @@ cloud:
     region:
       static: ap-northeast-2
     s3:
-      bucket: ${BUCKET_NAME}
-      base-url: ${BASE_URL}
+      bucket: gong9
+      base-url: https://gong9-name.s3.amazonaws.com
     stack:
       auto: false
