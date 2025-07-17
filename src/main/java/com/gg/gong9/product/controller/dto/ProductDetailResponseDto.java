@@ -1,5 +1,6 @@
 package com.gg.gong9.product.controller.dto;
 
+import com.gg.gong9.category.entity.CategoryType;
 import com.gg.gong9.product.entity.Product;
 import com.gg.gong9.product.entity.ProductImg;
 
@@ -11,7 +12,7 @@ public record ProductDetailResponseDto(
         String productName,
         String description,
         int price,
-        String category,
+        CategoryType categoryType,
         List<String> productImageUrls
 ) {
     public static ProductDetailResponseDto from(Product product) {
@@ -24,7 +25,7 @@ public record ProductDetailResponseDto(
                 product.getProductName(),
                 product.getDescription(),
                 product.getPrice(),
-                product.getCategory(),
+                product.getCategory().getCategoryType(),
                 imageUrls
         );
     }
