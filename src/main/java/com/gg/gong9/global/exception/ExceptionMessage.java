@@ -24,6 +24,10 @@ public enum ExceptionMessage {
     INVALID_PASSWORD("비밀번호가 일치하지 않습니다.", HttpStatus.UNAUTHORIZED),
     INVALID_EMAIL("이메일이 일치하지 않습니다.", HttpStatus.UNAUTHORIZED),
     ADMIN_ACCESS_ONLY("관리자만 접근할 수 있습니다.", HttpStatus.FORBIDDEN),
+
+    //S3
+    S3_UPLOAD_FAILED("S3 업로드에 실패했습니다.", HttpStatus.INTERNAL_SERVER_ERROR),
+
     ;
 
     private final String text;

@@ -22,3 +22,16 @@ logging:
 jwt:
   secret: ${JWT_SECRET}
   expiration: ${JWT_EXPIRATION}
+
+cloud:
+  aws:
+    credentials:
+      access-key: ${ACCESS_KEY}
+      secret-key: ${SECRET_KEY}
+    region:
+      static: ap-northeast-2
+    s3:
+      bucket: ${BUCKET_NAME}
+      base-url: ${BASE_URL}
+    stack:
+      auto: false
