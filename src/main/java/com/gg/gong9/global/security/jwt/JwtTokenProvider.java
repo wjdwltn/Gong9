@@ -1,9 +1,11 @@
 package com.gg.gong9.global.security.jwt;
 
+import com.gg.gong9.global.exception.ExceptionMessage;
+import com.gg.gong9.global.exception.exceptions.auth.AuthException;
+import com.gg.gong9.global.exception.exceptions.auth.AuthExceptionMessage;
 import com.gg.gong9.user.entity.User;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
-import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -12,7 +14,6 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
 
-import java.nio.charset.StandardCharsets;
 import java.security.Key;
 import java.util.Date;
 
@@ -55,9 +56,14 @@ public class JwtTokenProvider {
                     .build()
                     .parseClaimsJws(token);
             return true;
-        } catch (JwtException | IllegalArgumentException e) {
-            log.error("Invalid JWT token: {}", e.getMessage());
-            return false;
+        } catch (SecurityException | MalformedJwtException e) {
+            throw new AuthException(AuthExceptionMessage.INVALID_TOKEN);
+        } catch (ExpiredJwtException e) {
+            throw new AuthException(AuthExceptionMessage.EXPIRED_TOKEN);
+        } catch (UnsupportedJwtException e) {
+            throw new AuthException(AuthExceptionMessage.UNSUPPORTED_TOKEN);
+        } catch (IllegalArgumentException e) {
+            throw new AuthException(AuthExceptionMessage.EMPTY_CLAIMS);
         }
     }
 
