@@ -44,4 +44,5 @@ logging:
 
 jwt:
   secret: Z9tq!82uFg$1vNhK@Lp7wXc#zM4rB2eT
-  expiration: 86400000
+  accessExpiration: 3600000  # 1시간
+  refreshExpiration : 604800000  # 7일 = 7 * 24 * 60 * 60 * 1000 ms
