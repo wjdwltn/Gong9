@@ -44,14 +44,11 @@ public class SecurityConfig {
                 //세션 미사용 설정
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-//                        .requestMatchers(
-//                                "/users/**").permitAll()
-//                        //.requestMatchers("/admin/**").hasRole("ADMIN")
-//                        .anyRequest().authenticated()  임시 주석처리 (테스트)
-                            .anyRequest().permitAll()
-
-
-
+                        .requestMatchers(
+                                "/users/**",
+                                "/auth/**").permitAll()
+                        //.requestMatchers("/admin/**").hasRole("ADMIN")
+                        .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class);;
 
