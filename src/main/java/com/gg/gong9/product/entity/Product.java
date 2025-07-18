@@ -2,6 +2,7 @@ package com.gg.gong9.product.entity;
 
 import com.gg.gong9.global.base.BaseEntity;
 import com.gg.gong9.product.controller.dto.ProductCreateRequestDto;
+import com.gg.gong9.user.entity.User;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -35,19 +36,25 @@ public class Product extends BaseEntity {
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ProductImg> productImgs = new ArrayList<>();
 
-    private Product(String productName, String description, int price, Category category) {
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id")
+    private User user;
+
+    private Product(String productName, String description, int price, Category category, User user) {
         this.productName = productName;
         this.description = description;
         this.price = price;
         this.category = category;
+        this.user = user;
     }
 
-    public static Product create(ProductCreateRequestDto dto) {
+    public static Product create(ProductCreateRequestDto dto, User user) {
         return new Product(
                 dto.productName(),
                 dto.description(),
                 dto.price(),
-                dto.category()
+                dto.category(),
+                user
         );
     }
 

@@ -4,6 +4,8 @@ import com.gg.gong9.global.exception.exceptions.product.ProductException;
 import com.gg.gong9.product.controller.dto.*;
 import com.gg.gong9.product.entity.Product;
 import com.gg.gong9.product.repository.ProductRepository;
+import com.gg.gong9.user.entity.User;
+import com.gg.gong9.user.entity.UserRole;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -12,7 +14,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import static com.gg.gong9.global.exception.exceptions.product.ProductExceptionMessage.PRODUCT_NOT_FOUND;
+import static com.gg.gong9.global.exception.exceptions.product.ProductExceptionMessage.*;
 
 
 @Service
@@ -24,17 +26,20 @@ public class ProductService {
 
     // 상품 등록
     @Transactional
-    public ProductCreateResponseDto createProduct(ProductCreateRequestDto dto, List<MultipartFile> files) {
-        Product product = Product.create(dto);
+    public ProductCreateResponseDto createProduct(ProductCreateRequestDto dto, List<MultipartFile> files, User user) {
+        if (user.getUserRole()!= UserRole.ADMIN) {
+            throw new ProductException(NOT_ADMIN);
+        }
+        Product product = Product.create(dto, user);
         productImgService.saveProductImgs(product, files);
         Product saved = productRepository.save(product);
-
         return new ProductCreateResponseDto(saved.getId(), "상품 등록이 완료되었습니다.");
     }
 
     // 상품 상세 조회
-    public ProductDetailResponseDto getProductDetail(Long productId) {
+    public ProductDetailResponseDto getProductDetail(Long productId, User user) {
         Product product = getProductOrThrow(productId);
+        validateProductOwner(product, user);
         return ProductDetailResponseDto.from(product);
     }
 
@@ -47,8 +52,9 @@ public class ProductService {
 
     // 상품 수정
     @Transactional
-    public ProductResponse updateProduct(Long productId, ProductUpdateRequestDto dto, List<MultipartFile> newFiles, List<Long> deleteImgIds) {
+    public ProductResponse updateProduct(Long productId, ProductUpdateRequestDto dto, List<MultipartFile> newFiles, List<Long> deleteImgIds, User user) {
         Product product = getProductOrThrow(productId);
+        validateProductOwner(product, user);
 
         product.update(
                 dto.productName(),
@@ -65,12 +71,11 @@ public class ProductService {
     }
 
     @Transactional
-    public ProductResponse deleteProduct(Long productId) {
+    public ProductResponse deleteProduct(Long productId, User user) {
+
         Product product = productRepository.findById(productId)
                 .orElseThrow(() -> new ProductException(PRODUCT_NOT_FOUND));
-
-        // 자신이 등록한 상품만 삭제 가능
-
+        validateProductOwner(product, user);
         productRepository.delete(product);
         return new ProductResponse("상품이 삭제되었습니다.");
     }
@@ -92,6 +97,13 @@ public class ProductService {
             productImgService.saveProductImgs(product, newFiles);
         }
     }
+
+    private void validateProductOwner(Product product, User user) {
+        if (!product.getUser().getId().equals(user.getId())) {
+            throw new ProductException(NO_PERMISSION);
+        }
+    }
+
 
 
 }
