@@ -24,8 +24,11 @@ public class JwtTokenProvider {
     @Value("${jwt.secret}")
     private String secretKey;
 
-    @Value("${jwt.expiration}")
-    private long expiration;
+    @Value("${jwt.accessExpiration}")
+    private long accessExpiration;
+
+    @Value("${jwt.refreshExpiration}")
+    private long refreshExpiration;
 
     private final CustomUserDetailsService customUserDetailsService;
 
@@ -33,10 +36,17 @@ public class JwtTokenProvider {
         return Keys.hmacShaKeyFor(secretKey.getBytes());
     }
 
-    public String createToken(User user){
+    public String createAccessToken(User user){
+       return createToken(user,accessExpiration);
+    }
+
+    public String createRefreshToken(User user){
+       return createToken(user,refreshExpiration);
+    }
+
+    public String createToken(User user, long expiration){
         Date now = new Date();
         Date expirationDate = new Date(now.getTime() + expiration);
-
 
         return Jwts.builder()
                 .claim("email", user.getEmail())
@@ -81,4 +91,9 @@ public class JwtTokenProvider {
         return new UsernamePasswordAuthenticationToken(userDetails, "", userDetails.getAuthorities());
     }
 
+    public User getUserFromToken(String token) {
+        String email = getEmailFromToken(token);
+        UserDetails userDetails = customUserDetailsService.loadUserByUsername(email);
+        return ((CustomUserDetails) userDetails).getUser();
+    }
 }

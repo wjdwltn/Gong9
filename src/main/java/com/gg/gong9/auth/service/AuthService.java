@@ -1,11 +1,15 @@
 package com.gg.gong9.auth.service;
 
 import com.gg.gong9.auth.controller.dto.*;
+import com.gg.gong9.auth.repository.RefreshTokenRepository;
 import com.gg.gong9.auth.repository.VerificationCodeRepository;
 import com.gg.gong9.global.exception.exceptions.auth.AuthException;
 import com.gg.gong9.global.exception.exceptions.auth.AuthExceptionMessage;
 import com.gg.gong9.global.exception.exceptions.user.UserException;
 import com.gg.gong9.global.exception.exceptions.user.UserExceptionMessage;
+import com.gg.gong9.global.security.cookie.CookieUtil;
+import com.gg.gong9.global.security.jwt.CustomUserDetails;
+import com.gg.gong9.global.security.jwt.CustomUserDetailsService;
 import com.gg.gong9.global.security.jwt.JwtTokenProvider;
 import com.gg.gong9.mail.service.MailService;
 import com.gg.gong9.user.controller.dto.JoinRequest;
@@ -15,7 +19,10 @@ import com.gg.gong9.user.controller.dto.UserIdResponse;
 import com.gg.gong9.user.entity.User;
 import com.gg.gong9.user.entity.UserRole;
 import com.gg.gong9.user.repository.UserRepository;
+import io.jsonwebtoken.JwtException;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -31,11 +38,13 @@ public class AuthService {
     private final BCryptPasswordEncoder bCryptPasswordEncoder;
     private final JwtTokenProvider jwtTokenProvider;
     private final VerificationCodeRepository verificationCodeRepository;
+    private final RefreshTokenRepository refreshTokenRepository;
     private final MailService mailService;
 
     private static final long CODE_TTL = 300; //5분
     private static final String EMAIL_CODE_PREFIX = "emailCode:";
     private static final String PASSWORD_RESET_CODE_PREFIX = "passwordResetCode:";
+    private final CustomUserDetailsService customUserDetailsService;
 
     //회원가입
     public UserIdResponse join(JoinRequest joinRequest){
@@ -54,15 +63,57 @@ public class AuthService {
     }
 
     //로그인
-    public LoginResponse login(LoginRequest loginRequest){
+    public LoginResponse login(LoginRequest loginRequest, HttpServletResponse response){
         User user = findByEmailOrThrow(loginRequest.email());
 
         validatePasswordOrThrow(loginRequest.password(), user.getPassword());
 
         //JWT 토근 생성
-        String accessToken = jwtTokenProvider.createToken(user);
+        String accessToken = jwtTokenProvider.createAccessToken(user);
+        String refreshToken = jwtTokenProvider.createRefreshToken(user);
 
-        return new LoginResponse(user.getId(), accessToken);
+        //Redis에 refreshToken 저장 REFRESH_TOKEN_PREFIX
+        refreshTokenRepository.saveRefreshToken(user.getEmail(),refreshToken);
+
+        //쿠키에 refreshToken 저장
+        CookieUtil.createRefreshTokenCookie(refreshToken,response);
+
+        return new LoginResponse(user.getId(), accessToken,refreshToken);
+    }
+
+    public void logout(HttpServletResponse response, String email) {
+        refreshTokenRepository.deleteRefreshToken(email);
+        CookieUtil.deleteRefreshTokenFromCookies(response);
+    }
+
+    //토큰 재발행
+    public TokenReissueResponse reissueToken(String refreshToken, HttpServletResponse response){
+
+        if (!jwtTokenProvider.validateToken(refreshToken)) {
+            throw new AuthException(AuthExceptionMessage.INVALID_REFRESH_TOKEN);
+        }
+
+        User user = jwtTokenProvider.getUserFromToken(refreshToken);
+
+        String savedRefreshToken = refreshTokenRepository.getRefreshToken(user.getEmail())
+                .orElseThrow(()->new AuthException(AuthExceptionMessage.INVALID_REFRESH_TOKEN));
+
+        if (!savedRefreshToken.equals(refreshToken)) {
+            throw new AuthException(AuthExceptionMessage.REFRESH_TOKEN_MISMATCH);
+        }
+
+        //새로운 토큰 생성
+        String newAccessToken = jwtTokenProvider.createAccessToken(user);
+        String newRefreshToken = jwtTokenProvider.createRefreshToken(user);
+
+        // Redis에 새 토큰 저장
+        refreshTokenRepository.saveRefreshToken(user.getEmail(), newRefreshToken);
+
+        //쿠키에서 기존 토큰 삭제 & 새로운 토큰 저장
+        CookieUtil.deleteRefreshTokenFromCookies(response);
+        CookieUtil.createRefreshTokenCookie(newRefreshToken,response);
+
+        return new TokenReissueResponse(newAccessToken,newRefreshToken);
     }
 
     //이메일 인증 번호 요청
@@ -169,5 +220,4 @@ public class AuthService {
             throw new UserException(UserExceptionMessage.ALREADY_EXIST_EMAIL);
         }
     }
-
 }
