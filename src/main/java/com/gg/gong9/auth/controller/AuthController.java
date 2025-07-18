@@ -2,10 +2,15 @@ package com.gg.gong9.auth.controller;
 
 import com.gg.gong9.auth.controller.dto.*;
 import com.gg.gong9.auth.service.AuthService;
+import com.gg.gong9.global.security.cookie.CookieUtil;
+import com.gg.gong9.global.security.jwt.JwtTokenProvider;
 import com.gg.gong9.user.controller.dto.JoinRequest;
 import com.gg.gong9.user.controller.dto.LoginRequest;
 import com.gg.gong9.user.controller.dto.LoginResponse;
 import com.gg.gong9.user.controller.dto.UserIdResponse;
+import com.gg.gong9.user.entity.User;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -20,6 +25,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/auth")
 public class AuthController {
     private final AuthService authService;
+    private final JwtTokenProvider jwtTokenProvider;
 
     //회원가입
     @PostMapping("/signup")
@@ -34,9 +40,9 @@ public class AuthController {
 
     //로그인
     @PostMapping("/login")
-    public ResponseEntity<LoginResponse> login(@Valid @RequestBody LoginRequest loginRequest)
+    public ResponseEntity<LoginResponse> login(@Valid @RequestBody LoginRequest loginRequest, HttpServletResponse response)
     {
-        LoginResponse loginResponse = authService.login(loginRequest);
+        LoginResponse loginResponse = authService.login(loginRequest,response);
 
         return ResponseEntity.ok(loginResponse);
 
@@ -44,8 +50,32 @@ public class AuthController {
 
     // 로그아웃
     @PostMapping("/logout")
-    public ResponseEntity<AuthResponse> logout() {
+    public ResponseEntity<AuthResponse> logout(HttpServletRequest request, HttpServletResponse response) {
+        String refreshToken = CookieUtil.getRefreshTokenFromCookies(request);
+
+        if(refreshToken == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+
+        User user = jwtTokenProvider.getUserFromToken(refreshToken);
+
+        authService.logout(response,user.getEmail());
         return ResponseEntity.ok(new AuthResponse("로그아웃이 완료되었습니다."));
+    }
+
+    //토큰 재발행
+    @PostMapping("/reissue")
+    public ResponseEntity<TokenReissueResponse> reissueToken(HttpServletRequest request, HttpServletResponse response) {
+
+        String refreshToken = CookieUtil.getRefreshTokenFromCookies(request);
+
+        if(refreshToken == null) {
+            // 쿠키에 토큰이 없으면 401 Unauthorized 응답
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+
+        TokenReissueResponse reissueResponse = authService.reissueToken(refreshToken,response);
+        return ResponseEntity.ok(reissueResponse);
     }
 
     //이메일 본인인증 요청

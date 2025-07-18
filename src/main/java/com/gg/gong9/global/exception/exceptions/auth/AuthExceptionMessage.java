@@ -11,6 +11,8 @@ public enum AuthExceptionMessage {
     INVALID_TOKEN("유효하지 않은 JWT 토큰입니다.", HttpStatus.UNAUTHORIZED),
     EXPIRED_TOKEN("만료된 JWT 토큰입니다.", HttpStatus.UNAUTHORIZED),
     UNSUPPORTED_TOKEN("지원되지 않는 JWT 토큰입니다.", HttpStatus.BAD_REQUEST),
+    INVALID_REFRESH_TOKEN("유효하지 않은 Refresh 토큰입니다.", HttpStatus.UNAUTHORIZED),
+    REFRESH_TOKEN_MISMATCH("Refresh 토큰이 일치하지 않거나 만료되었습니다.", HttpStatus.UNAUTHORIZED),
     EMPTY_CLAIMS("JWT 클레임이 비어있습니다.", HttpStatus.BAD_REQUEST),
     UNAUTHORIZED_ACTION("사용자가 이 작업을 수행할 권한이 없습니다.", HttpStatus.FORBIDDEN),
 
