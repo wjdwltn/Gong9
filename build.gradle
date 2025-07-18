@@ -39,6 +39,13 @@ dependencies {
     //mail
     implementation 'org.springframework.boot:spring-boot-starter-mail'
 
+    // OAuth 2.0
+    implementation 'org.springframework.boot:spring-boot-starter-oauth2-client'
+
+    //Feign Client
+    implementation 'org.springframework.cloud:spring-cloud-starter-openfeign'
+    implementation platform("org.springframework.cloud:spring-cloud-dependencies:2023.0.4")
+
     testImplementation 'org.springframework.security:spring-security-test'
     compileOnly 'org.projectlombok:lombok'
     runtimeOnly 'com.mysql:mysql-connector-j'

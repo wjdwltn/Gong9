@@ -15,10 +15,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequiredArgsConstructor
@@ -47,6 +44,14 @@ public class AuthController {
         return ResponseEntity.ok(loginResponse);
 
     }
+
+    //카카오 로그인
+    @PostMapping("/login/kakao")
+    public ResponseEntity<LoginResponse> kakaoLogin(@RequestParam("code") String accessCode, HttpServletResponse httpServletResponse){
+        LoginResponse loginResponse = authService.kakaoLogin(accessCode,httpServletResponse);
+        return ResponseEntity.ok(loginResponse);
+    }
+
 
     // 로그아웃
     @PostMapping("/logout")
