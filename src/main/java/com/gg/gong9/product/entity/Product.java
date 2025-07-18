@@ -1,6 +1,5 @@
 package com.gg.gong9.product.entity;
 
-import com.gg.gong9.category.entity.Category;
 import com.gg.gong9.global.base.BaseEntity;
 import com.gg.gong9.product.controller.dto.ProductCreateRequestDto;
 import jakarta.persistence.*;
@@ -29,9 +28,8 @@ public class Product extends BaseEntity {
 
     private int price;
 
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "category_id")
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
     private Category category;
 
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
@@ -44,12 +42,12 @@ public class Product extends BaseEntity {
         this.category = category;
     }
 
-    public static Product create(ProductCreateRequestDto dto, Category category) {
+    public static Product create(ProductCreateRequestDto dto) {
         return new Product(
                 dto.productName(),
                 dto.description(),
                 dto.price(),
-                category
+                dto.category()
         );
     }
 

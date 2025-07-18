@@ -1,6 +1,7 @@
 package com.gg.gong9.product.controller.dto;
 
-import com.gg.gong9.category.entity.CategoryType;
+
+import com.gg.gong9.product.entity.Category;
 import com.gg.gong9.product.entity.Product;
 import com.gg.gong9.product.entity.ProductImg;
 
@@ -12,23 +13,23 @@ public record ProductDetailResponseDto(
         String productName,
         String description,
         int price,
-        CategoryType categoryType,
+        Category category,
         List<String> productImageUrls
 ) {
     public static ProductDetailResponseDto from(Product product) {
-        List<String> imageUrls = product.getProductImgs().stream()
-                .map(ProductImg::getProductImageUrl)
-                .collect(Collectors.toList());
-
         return new ProductDetailResponseDto(
                 product.getId(),
                 product.getProductName(),
                 product.getDescription(),
                 product.getPrice(),
-                product.getCategory().getCategoryType(),
-                imageUrls
+                product.getCategory(),
+                extractImageUrls(product)
         );
     }
 
+    private static List<String> extractImageUrls(Product product) {
+        return product.getProductImgs().stream()
+                .map(ProductImg::getProductImageUrl)
+                .collect(Collectors.toList());
+    }
 }
-

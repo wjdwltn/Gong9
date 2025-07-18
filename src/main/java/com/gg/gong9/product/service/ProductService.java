@@ -1,8 +1,5 @@
 package com.gg.gong9.product.service;
 
-import com.gg.gong9.category.entity.Category;
-import com.gg.gong9.category.entity.CategoryType;
-import com.gg.gong9.category.repository.CategoryRepository;
 import com.gg.gong9.global.exception.exceptions.product.ProductException;
 import com.gg.gong9.product.controller.dto.*;
 import com.gg.gong9.product.entity.Product;
@@ -17,7 +14,6 @@ import java.util.stream.Collectors;
 
 import static com.gg.gong9.global.exception.exceptions.product.ProductExceptionMessage.PRODUCT_NOT_FOUND;
 
-//import static com.gg.gong9.global.exception.ExceptionMessage.PRODUCT_NOT_FOUND;
 
 @Service
 @RequiredArgsConstructor
@@ -25,14 +21,11 @@ public class ProductService {
 
     private final ProductRepository productRepository;
     private final ProductImgService productImgService;
-    private final CategoryRepository categoryRepository;
 
     // 상품 등록
     @Transactional
     public ProductCreateResponseDto createProduct(ProductCreateRequestDto dto, List<MultipartFile> files) {
-        Category category = getCategory(dto.category());
-        Product product = Product.create(dto, category);
-
+        Product product = Product.create(dto);
         productImgService.saveProductImgs(product, files);
         Product saved = productRepository.save(product);
 
@@ -56,13 +49,12 @@ public class ProductService {
     @Transactional
     public ProductResponse updateProduct(Long productId, ProductUpdateRequestDto dto, List<MultipartFile> newFiles, List<Long> deleteImgIds) {
         Product product = getProductOrThrow(productId);
-        Category category = getCategory(dto.category());
 
         product.update(
                 dto.productName(),
                 dto.description(),
                 dto.price(),
-                category
+                dto.category()
         );
 
 
@@ -87,10 +79,6 @@ public class ProductService {
     private Product getProductOrThrow(Long productId) {
         return productRepository.findById(productId)
                 .orElseThrow(() -> new ProductException(PRODUCT_NOT_FOUND));
-    }
-
-    private Category getCategory(CategoryType categoryType) {
-        return categoryRepository.findByCategoryType(categoryType);
     }
 
     private void deleteProductImagesIfNecessary(List<Long> deleteImgIds) {

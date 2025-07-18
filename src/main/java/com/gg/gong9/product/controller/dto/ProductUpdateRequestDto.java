@@ -1,7 +1,7 @@
 package com.gg.gong9.product.controller.dto;
 
 
-import com.gg.gong9.category.entity.CategoryType;
+import com.gg.gong9.product.entity.Category;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.PositiveOrZero;
 
@@ -18,6 +18,6 @@ public record ProductUpdateRequestDto(
         Integer price,
 
         @NotNull(message = "카테고리는 필수입니다.")
-        CategoryType category
+        Category category
 ) {
 }
