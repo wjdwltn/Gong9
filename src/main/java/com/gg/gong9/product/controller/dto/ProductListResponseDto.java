@@ -6,10 +6,11 @@ import com.gg.gong9.product.entity.ProductImg;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public record ProductListResponseDto(Long id,
-                                     String productName,
-                                     int price,
-                                     List<String> productImageUrls
+public record ProductListResponseDto(
+        Long id,
+        String productName,
+        int price,
+        List<String> productImageUrls
 
 ) {
     public ProductListResponseDto(Product product) {
@@ -17,9 +18,14 @@ public record ProductListResponseDto(Long id,
                 product.getId(),
                 product.getProductName(),
                 product.getPrice(),
-                product.getProductImgs().stream()
-                        .map(ProductImg::getProductImageUrl)
-                        .collect(Collectors.toList())
+                extractImageUrls(product)
         );
     }
+
+    private static List<String> extractImageUrls(Product product) {
+        return product.getProductImgs().stream()
+                .map(ProductImg::getProductImageUrl)
+                .collect(Collectors.toList());
+    }
+
 }
