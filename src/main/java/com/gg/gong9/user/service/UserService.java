@@ -1,6 +1,5 @@
 package com.gg.gong9.user.service;
 
-import com.gg.gong9.global.exception.ExceptionMessage;
 import com.gg.gong9.global.exception.exceptions.user.UserException;
 import com.gg.gong9.global.exception.exceptions.user.UserExceptionMessage;
 import com.gg.gong9.user.controller.dto.*;

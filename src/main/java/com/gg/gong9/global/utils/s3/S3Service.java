@@ -2,8 +2,8 @@ package com.gg.gong9.global.utils.s3;
 
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.ObjectMetadata;
-import com.gg.gong9.global.exception.ExceptionMessage;
-import com.gg.gong9.global.exception.exceptions.S3Exception;
+import com.gg.gong9.global.exception.exceptions.s3.S3Exception;
+import com.gg.gong9.global.exception.exceptions.s3.S3ExceptionMessage;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -36,7 +36,7 @@ public class S3Service {
             return baseUrl + "/" + fileName;
 
         } catch (IOException e) {
-            throw new S3Exception(ExceptionMessage.S3_UPLOAD_FAILED);
+            throw new S3Exception(S3ExceptionMessage.PRODUCT_NOT_FOUND);
         }
     }
 }

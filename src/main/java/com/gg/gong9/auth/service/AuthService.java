@@ -2,7 +2,6 @@ package com.gg.gong9.auth.service;
 
 import com.gg.gong9.auth.controller.dto.*;
 import com.gg.gong9.auth.repository.VerificationCodeRepository;
-import com.gg.gong9.global.exception.ExceptionMessage;
 import com.gg.gong9.global.exception.exceptions.auth.AuthException;
 import com.gg.gong9.global.exception.exceptions.auth.AuthExceptionMessage;
 import com.gg.gong9.global.exception.exceptions.user.UserException;

@@ -3,7 +3,7 @@ package com.gg.gong9.product.service;
 import com.gg.gong9.category.entity.Category;
 import com.gg.gong9.category.entity.CategoryType;
 import com.gg.gong9.category.repository.CategoryRepository;
-import com.gg.gong9.global.exception.exceptions.ProductException;
+import com.gg.gong9.global.exception.exceptions.product.ProductException;
 import com.gg.gong9.product.controller.dto.*;
 import com.gg.gong9.product.entity.Product;
 import com.gg.gong9.product.repository.ProductRepository;
@@ -15,7 +15,9 @@ import org.springframework.web.multipart.MultipartFile;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import static com.gg.gong9.global.exception.ExceptionMessage.PRODUCT_NOT_FOUND;
+import static com.gg.gong9.global.exception.exceptions.product.ProductExceptionMessage.PRODUCT_NOT_FOUND;
+
+//import static com.gg.gong9.global.exception.ExceptionMessage.PRODUCT_NOT_FOUND;
 
 @Service
 @RequiredArgsConstructor

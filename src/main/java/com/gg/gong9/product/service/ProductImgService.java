@@ -1,7 +1,7 @@
 package com.gg.gong9.product.service;
 
-import com.gg.gong9.global.exception.ExceptionMessage;
-import com.gg.gong9.global.exception.exceptions.ProductException;
+import com.gg.gong9.global.exception.exceptions.product.ProductException;
+import com.gg.gong9.global.exception.exceptions.product.ProductExceptionMessage;
 import com.gg.gong9.global.utils.s3.S3Service;
 import com.gg.gong9.product.entity.Product;
 import com.gg.gong9.product.entity.ProductImg;
@@ -37,7 +37,7 @@ public class ProductImgService {
     public List<ProductImg> getProductImgs(Long productId) {
         List<ProductImg> productImgs = productImgRepository.findAllByProductId(productId);
         if (productImgs.isEmpty()) {
-            throw new ProductException(ExceptionMessage.PRODUCT_IMAGE_NOT_FOUND);
+            throw new ProductException(ProductExceptionMessage.PRODUCT_IMAGE_NOT_FOUND);
         }
         return productImgs;
     }
