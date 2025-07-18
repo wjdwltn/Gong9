@@ -45,7 +45,6 @@ public class Product extends BaseEntity {
     }
 
     public static Product create(ProductCreateRequestDto dto, Category category) {
-        if (dto.price() < 0) throw new IllegalArgumentException("가격은 0원 이상이어야 합니다.");
         return new Product(
                 dto.productName(),
                 dto.description(),
@@ -55,10 +54,10 @@ public class Product extends BaseEntity {
     }
 
     public void update( String productName, String description, Integer price, Category category) {
-        if (productName != null) this.productName = productName;
-        if (description != null) this.description = description;
-        if (price != null) this.price = price;
-        if (category != null) this.category = category;
+        this.productName = productName;
+        this.description = description;
+        this.price = price;
+        this.category = category;
     }
 
 }

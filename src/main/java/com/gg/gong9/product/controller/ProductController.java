@@ -2,6 +2,7 @@ package com.gg.gong9.product.controller;
 
 import com.gg.gong9.product.controller.dto.*;
 import com.gg.gong9.product.service.ProductService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -20,7 +21,7 @@ public class ProductController {
     // 상품 등록
     @PostMapping
     public ResponseEntity<ProductCreateResponseDto> create(
-            @RequestPart("requestDto") ProductCreateRequestDto requestDto,
+            @Valid @RequestPart("requestDto") ProductCreateRequestDto requestDto,
             @RequestPart("files") List<MultipartFile> files
     ){
         return ResponseEntity.status(HttpStatus.CREATED)
@@ -48,7 +49,7 @@ public class ProductController {
     @PutMapping("/{productId}")
     public ResponseEntity<ProductResponse> updateProduct(
             @PathVariable Long productId,
-            @RequestPart("RequestDto") ProductUpdateRequestDto RequestDto,
+            @Valid @RequestPart("RequestDto") ProductUpdateRequestDto RequestDto,
             @RequestPart(value = "newFiles", required = false) List<MultipartFile> newFiles,
             @RequestParam(value = "deleteImgIds", required = false) List<Long> deleteImgIds) {
 
