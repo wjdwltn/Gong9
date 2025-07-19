@@ -15,13 +15,13 @@ public class KakaoLoginService implements SocialLoginService {
     private final KakaoAuthClient kakaoAuthClient;
     private final KakaoProfileClient kakaoProfileClient;
 
-    @Value("{spring.kakao.auth.client-id}")
+    @Value("${spring.security.oauth2.kakao.client-id}")
     private String clientId;
 
-    @Value("{spring.kakao.auth.client-secret}")
+    @Value("${spring.security.oauth2.kakao.client-secret}")
     private String clientSecret;
 
-    @Value("{spring.kakao.auth.redirect-uri}")
+    @Value("${spring.security.oauth2.kakao.redirect-uri}")
     private String redirectUri;
 
 
@@ -38,7 +38,7 @@ public class KakaoLoginService implements SocialLoginService {
         KakaoTokenResponse tokenResponse = kakaoAuthClient.getToken(param);
 
         //
-        String accessToken = "Bearer" + tokenResponse.access_token();
+        String accessToken = "Bearer " + tokenResponse.access_token();
         KakaoProfileResponse profile = kakaoProfileClient.getUserInfo(accessToken);
 
         return SocialLogin.builder()
