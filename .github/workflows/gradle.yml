@@ -16,7 +16,6 @@ on:
 jobs:
   build:
     env:
-      DATABASE_DRIVER: ${{ secrets.DATABASE_DRIVER }}
       REDIS_HOST: ${{ secrets.REDIS_HOST }}
       REDIS_PORT: ${{ secrets.REDIS_PORT }}
       JWT_SECRET: ${{ secrets.JWT_SECRET }}
