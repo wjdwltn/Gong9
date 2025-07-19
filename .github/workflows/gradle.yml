@@ -15,6 +15,23 @@ on:
 
 jobs:
   build:
+    env:
+      DATABASE_DRIVER: ${{ secrets.DATABASE_DRIVER }}
+      REDIS_HOST: ${{ secrets.REDIS_HOST }}
+      REDIS_PORT: ${{ secrets.REDIS_PORT }}
+      JWT_SECRET: ${{ secrets.JWT_SECRET }}
+      JWT_ACCESS_EXPIRATION: ${{ secrets.JWT_ACCESS_EXPIRATION }}
+      JWT_REFRESH_EXPIRATION: ${{ secrets.JWT_REFRESH_EXPIRATION }}
+      MAIL_EMAIL: ${{ secrets.MAIL_EMAIL }}
+      MAIL_PASSWORD: ${{ secrets.MAIL_PASSWORD }}
+      KAKAO_CLIENT_ID: ${{ secrets.KAKAO_CLIENT_ID }}
+      KAKAO_SECRET: ${{ secrets.KAKAO_SECRET }}
+      KAKAO_REDIRECT_URI: ${{ secrets.KAKAO_REDIRECT_URI }}
+      AWS_REGION: ${{ secrets.AWS_REGION }}
+      BASE_URL: ${{ secrets.BASE_URL }}
+      BUCKET_NAME: ${{ secrets.BUCKET_NAME }}
+      S3_ACCESS_KEY: ${{ secrets.S3_ACCESS_KEY }}
+      S3_SECRET_KEY: ${{ secrets.S3_SECRET_KEY }}
 
     runs-on: ubuntu-latest
     permissions:
