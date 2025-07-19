@@ -3,7 +3,12 @@ spring:
     url: jdbc:mysql://localhost:3306/gong9
     username: root
     password: 1234
-    driver-class-name: com.mysql.cj.jdbc.Driver
+    driver-class-name: ${DATABASE_DRIVER}
+
+  servlet:
+    multipart:
+      max-file-size: 50MB
+      max-request-size: 50MB
 
   jpa:
     show-sql: true
@@ -17,8 +22,8 @@ spring:
   mail:
     host: smtp.gmail.com
     port: 587
-    username: jlsowltn20000@gmail.com
-    password: iqte ycsd wlue wtav
+    username: ${MAIL_EMAIL}
+    password: ${MAIL_PASSWORD}
     properties:
       mail:
         smtp:
@@ -33,9 +38,15 @@ spring:
 
   data:
     redis:
-      host: localhost
-      port: 6379
+      host: ${REDIS_HOST}
+      port: ${REDIS_PORT}
 
+  security:
+    oauth2:
+      kakao:
+        client-id: ${KAKAO_CLIENT_ID}
+        client-secret: ${KAKAO_SECRET}
+        redirect-uri: ${KAKAO_REDIRECT_URI}
 
 logging:
   level:
@@ -43,6 +54,19 @@ logging:
     org.springframework.web.filter.CommonsRequestLoggingFilter: DEBUG
 
 jwt:
-  secret: Z9tq!82uFg$1vNhK@Lp7wXc#zM4rB2eT
-  accessExpiration: 3600000  # 1시간
-  refreshExpiration : 604800000  # 7일 = 7 * 24 * 60 * 60 * 1000 ms
+  secret: ${JWT_SECRET}
+  accessExpiration: ${JWT_ACCESS_EXPIRATION}
+  refreshExpiration : ${JWT_REFRESH_EXPIRATION}
+
+cloud:
+  aws:
+    credentials:
+      access-key: ${S3_ACCESS_KEY}
+      secret-key: ${S3_SECRET_KEY}
+    region:
+      static: ap-northeast-2
+    s3:
+      bucket:  ${BUCKET_NAME}
+      base-url: ${BASE_URL}
+    stack:
+      auto: false
