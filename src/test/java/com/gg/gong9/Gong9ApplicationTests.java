@@ -3,7 +3,7 @@ package com.gg.gong9;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 
-//@SpringBootTest
+ //@SpringBootTest
 class Gong9ApplicationTests {
 
     @Test
