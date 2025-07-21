@@ -55,4 +55,15 @@ public class User extends BaseEntity {
         this.isDeleted = true;
     }
 
+    //소셜 로그인 생성
+    public static User createSocialLoginUser(String nickname, String email) {
+        return User.builder()
+                .username(nickname)
+                .email(email)
+                .password(null)
+                .address(null)
+                .userRole(UserRole.USER)
+                .build();
+    }
+
 }
