@@ -1,6 +1,5 @@
 package com.gg.gong9.global.security.jwt;
 
-import com.gg.gong9.global.exception.ExceptionMessage;
 import com.gg.gong9.global.exception.exceptions.auth.AuthException;
 import com.gg.gong9.global.exception.exceptions.auth.AuthExceptionMessage;
 import com.gg.gong9.user.entity.User;
