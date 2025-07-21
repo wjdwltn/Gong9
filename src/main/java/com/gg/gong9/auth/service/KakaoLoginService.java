@@ -1,5 +1,8 @@
-package com.gg.gong9.auth.kakao;
+package com.gg.gong9.auth.service;
 
+import com.gg.gong9.auth.kakao.KakaoAuthClient;
+import com.gg.gong9.auth.kakao.KakaoProfileClient;
+import com.gg.gong9.auth.kakao.SocialLogin;
 import com.gg.gong9.auth.kakao.dto.KakaoProfileResponse;
 import com.gg.gong9.auth.kakao.dto.KakaoTokenResponse;
 import lombok.RequiredArgsConstructor;

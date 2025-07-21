@@ -1,10 +1,10 @@
-package com.gg.gong9.auth.kakao;
+package com.gg.gong9.auth.repository;
 
+import com.gg.gong9.auth.kakao.SocialLogin;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 @Repository
 public interface SocialLoginRepository extends JpaRepository<SocialLogin, Long> {
-    //void save(String provider, String providerId, String userId );
     boolean existsByProviderAndProviderId(String provider, Long providerId);
 }
