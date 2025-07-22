@@ -21,6 +21,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import static com.gg.gong9.global.exception.exceptions.groupbuy.GroupBuyExceptionMessage.*;
+import static com.gg.gong9.global.exception.exceptions.product.ProductExceptionMessage.NO_PERMISSION_PRODUCT;
 import static com.gg.gong9.global.exception.exceptions.product.ProductExceptionMessage.PRODUCT_NOT_FOUND;
 
 @Service
@@ -33,12 +34,10 @@ public class GroupBuyService {
     // 공구 등록
     @Transactional
     public Long createGroupBuy(GroupBuyCreateRequestDto dto, User user) {
-        Product product = productRepository.findById(dto.productId())
-                .orElseThrow(() -> new ProductException(PRODUCT_NOT_FOUND));
+        Product product = getProductOrThrow(dto.productId());
 
         validateSeller(user);
-
-    // 자신의 상품의 경우에만
+        validateProductOwner(product, user);
 
         GroupBuy groupBuy = GroupBuy.create(dto,product,user);
         groupBuyRepository.save(groupBuy);
@@ -46,9 +45,8 @@ public class GroupBuyService {
     }
 
     // 공구 상세 조회
-    public GroupBuyDetailResponseDto getGroupBuyDetail(Long GroupBuyId) {
-        GroupBuy groupBuy = groupBuyRepository.findById(GroupBuyId)
-                .orElseThrow(() -> new GroupBuyException(NOT_FOUND_GROUPBUY));
+    public GroupBuyDetailResponseDto getGroupBuyDetail(Long groupBuyId) {
+        GroupBuy groupBuy = getGroupBuyOrThrow(groupBuyId);
 
         int joinedQuantity = 0; // 주문 수량 합계 (구매 구현 후 추가예정 임시 0으로)
         return GroupBuyDetailResponseDto.from(groupBuy, joinedQuantity);
@@ -74,9 +72,8 @@ public class GroupBuyService {
 
     // 공구 정보 수정
     @Transactional
-    public void updateGroupBuy(Long GroupBuyId, GroupBuyUpdateRequestDto dto, User user) {
-        GroupBuy groupBuy = groupBuyRepository.findById(GroupBuyId)
-                .orElseThrow(()->new GroupBuyException(NOT_FOUND_GROUPBUY));
+    public void updateGroupBuy(Long groupBuyId, GroupBuyUpdateRequestDto dto, User user) {
+        GroupBuy groupBuy = getGroupBuyOrThrow(groupBuyId);
 
         validateOwner(groupBuy, user);
         groupBuy.updateStatus();
@@ -96,9 +93,8 @@ public class GroupBuyService {
 
     // 공구 진행 취소
     @Transactional
-    public void cancelGroupBuy(Long groupById, User user) {
-        GroupBuy groupBuy = groupBuyRepository.findById(groupById)
-                .orElseThrow(()->new GroupBuyException(NOT_FOUND_GROUPBUY));
+    public void cancelGroupBuy(Long groupBuyId, User user) {
+        GroupBuy groupBuy = getGroupBuyOrThrow(groupBuyId);
 
         validateOwner(groupBuy, user);
         validateNotEnded(groupBuy);
@@ -117,33 +113,47 @@ public class GroupBuyService {
 
     // 공구 등록 삭제
     @Transactional
-    public void DeleteGroupBuy(Long groupById, User user) {
+    public void deleteGroupBuy(Long groupBuyId, User user) {
 
-        GroupBuy groupBuy = groupBuyRepository.findById(groupById)
-                .orElseThrow(()->new GroupBuyException(NOT_FOUND_GROUPBUY));
+        GroupBuy groupBuy = getGroupBuyOrThrow(groupBuyId);
 
         validateOwner(groupBuy, user);
         groupBuyRepository.delete(groupBuy);
     }
 
-    public void validateSeller(User user) {
+    private void validateSeller(User user) {
         if (!user.getUserRole().equals(UserRole.ADMIN)) {
             throw new GroupBuyException(ONLY_SELLER_CAN_REGISTER);
         }
     }
 
-    public void validateOwner(GroupBuy groupBuy, User user) {
+    private void validateOwner(GroupBuy groupBuy, User user) {
         if (!groupBuy.getUser().getId().equals(user.getId())) {
-            throw new GroupBuyException(NO_PERMISSION);
+            throw new GroupBuyException(NO_PERMISSION_GROUPBUY);
         }
     }
 
-    public void validateNotEnded(GroupBuy groupBuy) {
+    private void validateNotEnded(GroupBuy groupBuy) {
         if (groupBuy.getStatus() == Status.COMPLETED || groupBuy.getStatus() == Status.CANCELED) {
             throw new GroupBuyException(ALREADY_ENDED);
         }
     }
 
+    private GroupBuy getGroupBuyOrThrow(Long groupBuyId) {
+        return groupBuyRepository.findById(groupBuyId)
+                .orElseThrow(() -> new GroupBuyException(NOT_FOUND_GROUPBUY));
+    }
+
+    private Product getProductOrThrow(Long productId) {
+        return productRepository.findById(productId)
+                .orElseThrow(() -> new ProductException(PRODUCT_NOT_FOUND));
+    }
+
+    private void validateProductOwner(Product product, User user) {
+        if(!product.getUser().getId().equals(user.getId())) {
+            throw new ProductException(NO_PERMISSION_PRODUCT);
+        }
+    }
 
 
 
