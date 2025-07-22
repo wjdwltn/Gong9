@@ -26,14 +26,13 @@ public class ProductService {
 
     // 상품 등록
     @Transactional
-    public ProductCreateResponseDto createProduct(ProductCreateRequestDto dto, List<MultipartFile> files, User user) {
-        if (user.getUserRole()!= UserRole.ADMIN) {
+    public Product createProduct(ProductCreateRequestDto dto, List<MultipartFile> files, User user) {
+        if (user.getUserRole() != UserRole.ADMIN) {
             throw new ProductException(NOT_ADMIN);
         }
         Product product = Product.create(dto, user);
         productImgService.saveProductImgs(product, files);
-        Product saved = productRepository.save(product);
-        return new ProductCreateResponseDto(saved.getId(), "상품 등록이 완료되었습니다.");
+        return productRepository.save(product);
     }
 
     // 상품 상세 조회
@@ -44,7 +43,7 @@ public class ProductService {
     }
 
     // 상품 목록 조회
-    public List<ProductListResponseDto> getProductList() {
+    public List<ProductListResponseDto> getProductList(User user) {
         return productRepository.findAll().stream()
                 .map(ProductListResponseDto::new)
                 .collect(Collectors.toList());
@@ -52,7 +51,7 @@ public class ProductService {
 
     // 상품 수정
     @Transactional
-    public ProductResponse updateProduct(Long productId, ProductUpdateRequestDto dto, List<MultipartFile> newFiles, List<Long> deleteImgIds, User user) {
+    public void updateProduct(Long productId, ProductUpdateRequestDto dto, List<MultipartFile> newFiles, List<Long> deleteImgIds, User user) {
         Product product = getProductOrThrow(productId);
         validateProductOwner(product, user);
 
@@ -67,17 +66,14 @@ public class ProductService {
         deleteProductImagesIfNecessary(deleteImgIds);
         addNewProductImagesIfPresent(product, newFiles);
 
-        return new ProductResponse("상품 정보가 수정되었습니다");
     }
 
     @Transactional
-    public ProductResponse deleteProduct(Long productId, User user) {
+    public void deleteProduct(Long productId, User user) {
 
-        Product product = productRepository.findById(productId)
-                .orElseThrow(() -> new ProductException(PRODUCT_NOT_FOUND));
+        Product product = getProductOrThrow(productId);
         validateProductOwner(product, user);
         productRepository.delete(product);
-        return new ProductResponse("상품이 삭제되었습니다.");
     }
 
 
