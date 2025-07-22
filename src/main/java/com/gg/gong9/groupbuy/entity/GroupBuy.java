@@ -33,7 +33,7 @@ public class GroupBuy extends BaseEntity {
     private LocalDateTime endAt;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
+    @Column(nullable = false, length = 20)
     private Status status;
 
     @ManyToOne(fetch = FetchType.LAZY)
