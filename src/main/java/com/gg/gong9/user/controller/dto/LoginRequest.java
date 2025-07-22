@@ -11,7 +11,7 @@ public record LoginRequest(
         String email,
 
         @NotNull
-        @Length(min = 10, message = "10 글자 이상으로 작성해주세요.")
+        @Length(min = 4, message = "4 글자 이상으로 작성해주세요.")
         String password
 ) {
 }
