@@ -1,6 +1,7 @@
 package com.gg.gong9.groupbuy.entity;
 
 import com.gg.gong9.global.base.BaseEntity;
+import com.gg.gong9.global.exception.exceptions.groupbuy.GroupBuyException;
 import com.gg.gong9.groupbuy.controller.dto.GroupBuyCreateRequestDto;
 import com.gg.gong9.groupbuy.controller.command.GroupBuyUpdateCommand;
 import com.gg.gong9.product.entity.Product;
@@ -10,6 +11,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
+
+import static com.gg.gong9.global.exception.exceptions.groupbuy.GroupBuyExceptionMessage.INVALID_TOTAL_QUANTITY;
 
 
 @Entity
@@ -82,7 +85,7 @@ public class GroupBuy extends BaseEntity {
 
     private void updateRecruiting(GroupBuyUpdateCommand command) {
         if (command.totalQuantity() < command.paidQuantity()) {
-            throw new IllegalArgumentException("결제된 수량보다 적은 총 수량으로 수정할 수 없습니다.");
+            throw new GroupBuyException(INVALID_TOTAL_QUANTITY);
         }
         this.totalQuantity = command.totalQuantity();
         this.limitQuantity = command.limitQuantity();

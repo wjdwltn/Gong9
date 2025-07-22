@@ -1,6 +1,7 @@
 package com.gg.gong9.groupbuy.service;
 
-import com.amazonaws.services.kms.model.NotFoundException;
+import com.gg.gong9.global.exception.exceptions.groupbuy.GroupBuyException;
+import com.gg.gong9.global.exception.exceptions.product.ProductException;
 import com.gg.gong9.groupbuy.controller.command.GroupBuyUpdateCommand;
 import com.gg.gong9.groupbuy.controller.dto.*;
 import com.gg.gong9.groupbuy.entity.GroupBuy;
@@ -19,6 +20,9 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import static com.gg.gong9.global.exception.exceptions.groupbuy.GroupBuyExceptionMessage.*;
+import static com.gg.gong9.global.exception.exceptions.product.ProductExceptionMessage.PRODUCT_NOT_FOUND;
+
 @Service
 @RequiredArgsConstructor
 public class GroupBuyService {
@@ -30,14 +34,11 @@ public class GroupBuyService {
     @Transactional
     public Long createGroupBuy(GroupBuyCreateRequestDto dto, User user) {
         Product product = productRepository.findById(dto.productId())
-                .orElseThrow(() -> new NotFoundException("상품이 존재하지 않습니다."));
+                .orElseThrow(() -> new ProductException(PRODUCT_NOT_FOUND));
 
-        //판매자만 등록 가능
-        if(!user.getUserRole().equals(UserRole.ADMIN)){
-            throw new UnsupportedOperationException("공구는 판매자의 경우만 등록할 수 있습니다.");
-        }
+        validateSeller(user);
 
-// 자신의 상품의 경우에만
+    // 자신의 상품의 경우에만
 
         GroupBuy groupBuy = GroupBuy.create(dto,product,user);
         groupBuyRepository.save(groupBuy);
@@ -47,7 +48,7 @@ public class GroupBuyService {
     // 공구 상세 조회
     public GroupBuyDetailResponseDto getGroupBuyDetail(Long GroupBuyId) {
         GroupBuy groupBuy = groupBuyRepository.findById(GroupBuyId)
-                .orElseThrow(() -> new NotFoundException("해당 공동구매가 존재하지 않습니다."));
+                .orElseThrow(() -> new GroupBuyException(NOT_FOUND_GROUPBUY));
 
         int joinedQuantity = 0; // 주문 수량 합계 (구매 구현 후 추가예정 임시 0으로)
         return GroupBuyDetailResponseDto.from(groupBuy, joinedQuantity);
@@ -75,13 +76,9 @@ public class GroupBuyService {
     @Transactional
     public void updateGroupBuy(Long GroupBuyId, GroupBuyUpdateRequestDto dto, User user) {
         GroupBuy groupBuy = groupBuyRepository.findById(GroupBuyId)
-                .orElseThrow(()->new NotFoundException("해당 공동구매가 존재하지 않습니다."));
+                .orElseThrow(()->new GroupBuyException(NOT_FOUND_GROUPBUY));
 
-        // 자신이 등록한 공동구매가 아니면 수정불가
-        if(!groupBuy.getUser().getId().equals(user.getId())){
-            throw new UnsupportedOperationException("공구를 수정할 권한이 없습니다.");
-        }
-
+        validateOwner(groupBuy, user);
         groupBuy.updateStatus();
         // 현재 결제된 수량을 가져오기 (결제 구현 후 수정예정. 임시 0으로 하드코딩)
         int paidQuantity = 0;
@@ -101,14 +98,10 @@ public class GroupBuyService {
     @Transactional
     public void cancelGroupBuy(Long groupById, User user) {
         GroupBuy groupBuy = groupBuyRepository.findById(groupById)
-                .orElseThrow(()->new NotFoundException("해당 공동구매가 존재하지 않습니다."));
-        if(!groupBuy.getUser().getId().equals(user.getId())){
-            throw new UnsupportedOperationException("해당 공동구매를 취소할 권한이 없습니다.");
-        }
+                .orElseThrow(()->new GroupBuyException(NOT_FOUND_GROUPBUY));
 
-        if (groupBuy.getStatus() == Status.COMPLETED || groupBuy.getStatus() == Status.CANCELED) {
-            throw new IllegalStateException("이미 종료된 공동구매는 취소할 수 없습니다.");
-        }
+        validateOwner(groupBuy, user);
+        validateNotEnded(groupBuy);
 
         groupBuy.cancel();
     }
@@ -127,13 +120,32 @@ public class GroupBuyService {
     public void DeleteGroupBuy(Long groupById, User user) {
 
         GroupBuy groupBuy = groupBuyRepository.findById(groupById)
-                .orElseThrow(()->new NotFoundException("해당 공동구매가 존재하지 않습니다."));
+                .orElseThrow(()->new GroupBuyException(NOT_FOUND_GROUPBUY));
 
-        if(!groupBuy.getUser().getId().equals(user.getId())){
-            throw new UnsupportedOperationException("공구를 삭제할 권한이 없습니다.");
-        }
+        validateOwner(groupBuy, user);
         groupBuyRepository.delete(groupBuy);
     }
+
+    public void validateSeller(User user) {
+        if (!user.getUserRole().equals(UserRole.ADMIN)) {
+            throw new GroupBuyException(ONLY_SELLER_CAN_REGISTER);
+        }
+    }
+
+    public void validateOwner(GroupBuy groupBuy, User user) {
+        if (!groupBuy.getUser().getId().equals(user.getId())) {
+            throw new GroupBuyException(NO_PERMISSION);
+        }
+    }
+
+    public void validateNotEnded(GroupBuy groupBuy) {
+        if (groupBuy.getStatus() == Status.COMPLETED || groupBuy.getStatus() == Status.CANCELED) {
+            throw new GroupBuyException(ALREADY_ENDED);
+        }
+    }
+
+
+
 
     // 내 공구 통계 조회
 }
