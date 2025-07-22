@@ -1,30 +1,28 @@
 package com.gg.gong9.order.service;
 
+import com.gg.gong9.global.exception.exceptions.groupbuy.GroupBuyException;
 import com.gg.gong9.global.exception.exceptions.order.OrderException;
 import com.gg.gong9.global.exception.exceptions.order.OrderExceptionMessage;
-import com.gg.gong9.global.exception.exceptions.user.UserException;
-import com.gg.gong9.global.exception.exceptions.user.UserExceptionMessage;
+import com.gg.gong9.groupbuy.entity.GroupBuy;
+import com.gg.gong9.groupbuy.entity.Status;
+import com.gg.gong9.groupbuy.repository.GroupBuyRepository;
+import com.gg.gong9.groupbuy.service.GroupBuyService;
 import com.gg.gong9.order.controller.dto.OrderDetailResponse;
 import com.gg.gong9.order.controller.dto.OrderListResponse;
 import com.gg.gong9.order.controller.dto.OrderRequest;
-import com.gg.gong9.order.controller.dto.OrderResponse;
 import com.gg.gong9.order.entity.Order;
 import com.gg.gong9.order.entity.OrderStatus;
 import com.gg.gong9.order.repository.OrderRepository;
-import com.gg.gong9.product.entity.Product;
-import com.gg.gong9.product.repository.ProductRepository;
-import com.gg.gong9.product.service.ProductService;
 import com.gg.gong9.user.entity.User;
-import com.gg.gong9.user.repository.UserRepository;
 import com.gg.gong9.user.service.UserService;
-import lombok.NoArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.stream.Collector;
 import java.util.stream.Collectors;
+
+import static com.gg.gong9.global.exception.exceptions.groupbuy.GroupBuyExceptionMessage.NOT_FOUND_GROUPBUY;
 
 @Service
 @RequiredArgsConstructor
@@ -32,20 +30,24 @@ public class OrderService {
 
     private final OrderRepository orderRepository;
     private final UserService userService;
-    //private final GroupBuy groupBuy;
+    private final GroupBuyService groupBuyService;
+    private final GroupBuyRepository groupBuyRepository;
 
     //주문 생성
     public Order createOrder(Long userId, OrderRequest request){
 
         User user = userService.findByIdOrThrow(userId);
 
-        //GroupBuy groupBuy = groupBuyService.getGroupBuyOrThrow(request.groupBuyId());
+        GroupBuy groupBuy = groupBuyRepository.findById(request.groupBuyId())
+                .orElseThrow(()->new GroupBuyException(NOT_FOUND_GROUPBUY));
+
+        //추후 동시성 문제 고려
 
         Order order = Order.builder()
                 .quantity(request.quantity())
                 .status(OrderStatus.PAYMENT_COMPLETED)
                 .user(user)
-                //.groupBuy(groupBuy)
+                .groupBuy(groupBuy)
                 .build();
 
         return orderRepository.save(order);
@@ -71,15 +73,28 @@ public class OrderService {
     public void cancelOrder(Long userId, Long orderId){
         Order order = findByIdOrThrow(orderId);
         checkOwner(order,userId);
-        order.softDelete();
+
+        if(order.getStatus() == OrderStatus.CANCELLED){
+            throw new OrderException(OrderExceptionMessage.ORDER_ALREADY_CANCELLED);
+        }
+
+        GroupBuy groupBuy = order.getGroupBuy();
+
+        if(groupBuy.getStatus() != Status.RECRUITING){
+            throw new OrderException(OrderExceptionMessage.ORDER_CANNOT_CANCEL);
+        }
+
+        order.cancel();
+
+        //추후 수량 감소 로직
+        //환불 등..
     }
 
-
-    //주문 삭제
+    //주문 삭제(주문 목록에서)
     public void deleteOrder(Long userId, Long orderId){
         Order order = findByIdOrThrow(orderId);
         checkOwner(order,userId);
-        orderRepository.deleteById(orderId);
+        order.softDelete();
     }
 
     //검즘

@@ -1,6 +1,7 @@
 package com.gg.gong9.order.entity;
 
 import com.gg.gong9.global.base.BaseEntity;
+import com.gg.gong9.groupbuy.entity.GroupBuy;
 import com.gg.gong9.product.entity.Product;
 import com.gg.gong9.user.entity.User;
 import jakarta.persistence.*;
@@ -30,20 +31,22 @@ public class Order extends BaseEntity {
     @JoinColumn(name = "user_id")
     private User user;
 
-//    @ManyToOne(fetch = FetchType.LAZY)
-//    @JoinColumn(name = "group_purchase_id")
-//    private GroupPurchase groupPurchase;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "group_buy_id")
+    private GroupBuy groupBuy;
 
     @Column(name = "is_deleted", nullable = false)
     private boolean isDeleted = false;
 
     @Builder
-    public Order(int quantity, OrderStatus status, User user) {
+    public Order(int quantity, OrderStatus status, User user, GroupBuy groupBuy) {
         this.quantity = quantity;
         this.status = status;
         this.user = user;
-        //this.groupPurchase = groupPurchase;
+        this.groupBuy = groupBuy;
     }
+
+    public void cancel(){this.status = OrderStatus.CANCELLED; }
 
     public void softDelete(){
         this.isDeleted = true;

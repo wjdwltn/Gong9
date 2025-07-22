@@ -1,39 +1,61 @@
 package com.gg.gong9.order.controller.dto;
 
+import com.gg.gong9.groupbuy.entity.GroupBuy;
 import com.gg.gong9.order.entity.Order;
 import com.gg.gong9.order.entity.OrderStatus;
 import com.gg.gong9.product.entity.Product;
+import com.gg.gong9.user.entity.User;
 
 import java.time.LocalDateTime;
 
 public record OrderDetailResponse(
         Long orderId,
+        int quantity,
+        String orderStatus,
+        LocalDateTime orderedAt,
+
+        Long groupBuyId,
+        String groupBuyStatus,
+        LocalDateTime groupBuyStartAt,
+        LocalDateTime groupBuyEndAt,
+
         Long productId,
         String productName,
         int productPrice,
-        int quantity,
-        OrderStatus orderStatus,
-        GroupStatus groupStatus,
-        LocalDateTime groupPurchaseStartAt,
-        LocalDateTime groupPurchaseEndAt,
-        LocalDateTime createdAt
+        String productImgUrl,
+
+        Long buyerId,
+        String buyerName,
+        String buyerEmail
 
 ) {
     public static OrderDetailResponse from(Order order) {
         GroupBuy groupBuy = order.getGroupBuy();
         Product product = groupBuy.getProduct();
-        return new OrderListResponse(
+        User buyer = order.getUser();
+
+        String productImgUrl = product.getProductImgs().isEmpty() ? null
+                : product.getProductImgs().get(0).getProductImageUrl();
+
+        return new OrderDetailResponse(
                 order.getId(),
-                groupBuy.getId(),
-                product.getProductName(),
-                product.getPrice(),
                 order.getQuantity(),
-                order.getStatus(),
-                groupBuy.getTotalQuantity(),
-                groupBuy.getStatus(),
+                order.getStatus().getValue(),
+                order.getCreatedAt(),
+
+                groupBuy.getId(),
+                groupBuy.getStatus().name(),
                 groupBuy.getStartAt(),
                 groupBuy.getEndAt(),
-                order.getCreatedAt()
+
+                product.getId(),
+                product.getProductName(),
+                product.getPrice(),
+                productImgUrl,
+
+                buyer.getId(),
+                buyer.getUsername(),
+                buyer.getEmail()
         );
     }
 }
