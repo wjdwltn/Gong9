@@ -1,6 +1,8 @@
 package com.gg.gong9.groupbuy.entity;
 
 import com.gg.gong9.global.base.BaseEntity;
+import com.gg.gong9.groupbuy.controller.dto.GroupBuyCreateRequestDto;
+import com.gg.gong9.groupbuy.controller.command.GroupBuyUpdateCommand;
 import com.gg.gong9.product.entity.Product;
 import com.gg.gong9.user.entity.User;
 import jakarta.persistence.*;
@@ -40,4 +42,63 @@ public class GroupBuy extends BaseEntity {
     private User user;
 
 
+    private GroupBuy(int totalQuantity, int limitQuantity, LocalDateTime startAt, LocalDateTime endAt, Status status, Product product, User user) {
+        this.totalQuantity = totalQuantity;
+        this.limitQuantity = limitQuantity;
+        this.startAt = startAt;
+        this.endAt = endAt;
+        this.status = status;
+        this.product = product;
+        this.user = user;
+    }
+
+
+    public static GroupBuy create(GroupBuyCreateRequestDto dto, Product product, User user) {
+        return new GroupBuy(
+                dto.totalQuantity(),
+                dto.limitQuantity(),
+                dto.startAt(),
+                dto.endAt(),
+                Status.BEFORE_START,
+                product,
+                user
+        );
+    }
+
+    public void update(GroupBuyUpdateCommand command) {
+        switch (this.status) {
+            case BEFORE_START -> updateBeforeStart(command);
+            case RECRUITING -> updateRecruiting(command);
+            case COMPLETED, CANCELED -> throw new IllegalStateException("모집 완료 및 취소된 공구건 수정 불가");
+        }
+    }
+
+    private void updateBeforeStart(GroupBuyUpdateCommand command) {
+        this.totalQuantity = command.totalQuantity();
+        this.limitQuantity = command.limitQuantity();
+        this.startAt = command.startAt();
+        this.endAt = command.endAt();
+    }
+
+    private void updateRecruiting(GroupBuyUpdateCommand command) {
+        if (command.totalQuantity() < command.paidQuantity()) {
+            throw new IllegalArgumentException("결제된 수량보다 적은 총 수량으로 수정할 수 없습니다.");
+        }
+        this.totalQuantity = command.totalQuantity();
+        this.limitQuantity = command.limitQuantity();
+        this.endAt = command.endAt();
+    }
+
+    public void updateStatus(){
+        LocalDateTime now = LocalDateTime.now();
+        if (status == Status.BEFORE_START && now.isAfter(startAt)) {
+            this.status = Status.RECRUITING;
+        } else if (status == Status.RECRUITING && now.isAfter(endAt)) {
+            this.status = Status.COMPLETED;
+        }
+    }
+
+    public void cancel(){
+        this.status = Status.CANCELED;
+    }
 }
