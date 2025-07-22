@@ -96,7 +96,7 @@ public class ProductService {
 
     private void validateProductOwner(Product product, User user) {
         if (!product.getUser().getId().equals(user.getId())) {
-            throw new ProductException(NO_PERMISSION);
+            throw new ProductException(NO_PERMISSION_PRODUCT);
         }
     }
 

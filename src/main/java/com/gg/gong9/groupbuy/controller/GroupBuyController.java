@@ -92,7 +92,7 @@ public class GroupBuyController {
             @PathVariable Long groupBuyId,
             @AuthenticationPrincipal CustomUserDetails userDetails
     ){
-        groupBuyService.DeleteGroupBuy(groupBuyId, userDetails.getUser());
+        groupBuyService.deleteGroupBuy(groupBuyId, userDetails.getUser());
         return ResponseEntity.ok(new GroupBuyResponse("공구가 삭제되었습니다."));
     }
 
