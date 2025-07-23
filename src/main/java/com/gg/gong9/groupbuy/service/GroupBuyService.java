@@ -5,10 +5,10 @@ import com.gg.gong9.global.exception.exceptions.product.ProductException;
 import com.gg.gong9.groupbuy.controller.command.GroupBuyUpdateCommand;
 import com.gg.gong9.groupbuy.controller.dto.*;
 import com.gg.gong9.groupbuy.entity.GroupBuy;
-import com.gg.gong9.groupbuy.entity.Status;
+import com.gg.gong9.global.enums.GroupBuyStatus;
 import com.gg.gong9.groupbuy.repository.GroupBuyRepository;
 import com.gg.gong9.groupbuy.controller.dto.GroupBuyListResponseDto;
-import com.gg.gong9.product.entity.Category;
+import com.gg.gong9.global.enums.Category;
 import com.gg.gong9.product.entity.Product;
 import com.gg.gong9.product.repository.ProductRepository;
 import com.gg.gong9.user.entity.User;
@@ -62,7 +62,7 @@ public class GroupBuyService {
     }
 
     // 마감 임박 공구 목록 조회
-    public List<GroupBuyUrgentListResponseDto> getGroupBuyUrgentList(Status status){
+    public List<GroupBuyUrgentListResponseDto> getGroupBuyUrgentList(GroupBuyStatus status){
         List<GroupBuy> groupBuys = groupBuyRepository.findAllByStatusOrderByEndAtAsc(status);
 
         return groupBuys.stream()
@@ -134,7 +134,7 @@ public class GroupBuyService {
     }
 
     private void validateNotEnded(GroupBuy groupBuy) {
-        if (groupBuy.getStatus() == Status.COMPLETED || groupBuy.getStatus() == Status.CANCELED) {
+        if (groupBuy.getStatus() == GroupBuyStatus.COMPLETED || groupBuy.getStatus() == GroupBuyStatus.CANCELED) {
             throw new GroupBuyException(ALREADY_ENDED);
         }
     }

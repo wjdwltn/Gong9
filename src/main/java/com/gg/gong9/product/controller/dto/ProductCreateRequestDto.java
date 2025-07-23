@@ -1,6 +1,6 @@
 package com.gg.gong9.product.controller.dto;
 
-import com.gg.gong9.product.entity.Category;
+import com.gg.gong9.global.enums.Category;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.PositiveOrZero;
