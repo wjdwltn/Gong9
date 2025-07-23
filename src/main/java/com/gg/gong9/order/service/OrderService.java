@@ -41,6 +41,9 @@ public class OrderService {
         GroupBuy groupBuy = groupBuyRepository.findById(request.groupBuyId())
                 .orElseThrow(()->new GroupBuyException(NOT_FOUND_GROUPBUY));
 
+        //주문 중복 검증
+        existsByUserAndGroupBuy(user,groupBuy);
+
         //추후 동시성 문제 고려
 
         Order order = Order.builder()
@@ -108,5 +111,11 @@ public class OrderService {
     private Order findByIdOrThrow(long id){
         return orderRepository.findByIdAndIsDeletedFalse(id)
                 .orElseThrow(()-> new OrderException(OrderExceptionMessage.ORDER_NOT_FOUND));
+    }
+
+    private void existsByUserAndGroupBuy(User user, GroupBuy groupBuy){
+        if(orderRepository.existsByUserAndGroupBuy(user,groupBuy)){
+            throw new OrderException(OrderExceptionMessage.DUPLICATE_ORDER);
+        }
     }
 }

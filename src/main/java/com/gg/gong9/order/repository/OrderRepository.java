@@ -1,6 +1,8 @@
 package com.gg.gong9.order.repository;
 
+import com.gg.gong9.groupbuy.entity.GroupBuy;
 import com.gg.gong9.order.entity.Order;
+import com.gg.gong9.user.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Repository;
@@ -13,5 +15,7 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
     List<Order> findAllByUserId(Long userId);
 
     Optional<Order> findByIdAndIsDeletedFalse(Long id);
+
+    boolean existsByUserAndGroupBuy(User user, GroupBuy groupBuy);
 }
  
