@@ -52,7 +52,7 @@ public class UserService {
 
     //검증
 
-    private User findByIdOrThrow(long id){
+    public User findByIdOrThrow(long id){
         return userRepository.findByIdAndIsDeletedFalse(id)
                 .orElseThrow(()-> new UserException(UserExceptionMessage.USER_NOT_FOUND));
     }
