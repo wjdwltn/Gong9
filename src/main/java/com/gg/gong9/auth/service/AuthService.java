@@ -51,9 +51,9 @@ public class AuthService {
                 joinRequest.username(),
                 joinRequest.email(),
                 bCryptPasswordEncoder.encode(joinRequest.password()),
+                joinRequest.phoneNumber(),
                 joinRequest.toAddress()
         );
-
 
         User savedUser = userRepository.save(user);
         return new UserIdResponse(savedUser.getId());
@@ -67,6 +67,7 @@ public class AuthService {
                 joinRequest.username(),
                 joinRequest.email(),
                 bCryptPasswordEncoder.encode(joinRequest.password()),
+                joinRequest.phoneNumber(),
                 joinRequest.toBankAccount()
         );
 

@@ -3,6 +3,7 @@ import com.gg.gong9.user.entity.Address;
 import com.gg.gong9.user.entity.BankAccount;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
 import org.hibernate.validator.constraints.Length;
 
 public record SellerJoinRequest(
@@ -18,6 +19,10 @@ public record SellerJoinRequest(
         @NotNull
         @Length(min = 3, max = 20, message = "3~20 글자로 작성해주세요.")
         String username,
+
+        @NotNull
+        @Pattern(regexp = "^\\d{10,11}$", message = "'-'는 제외하여 작성해주세요.")
+        String phoneNumber,
 
         @NotNull
         String bankName,

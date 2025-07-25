@@ -24,6 +24,8 @@ public class User extends BaseEntity {
 
     private String password;
 
+    private String phoneNumber;
+
     @Embedded
     private Address address; // 구매자만 사용
 
@@ -37,31 +39,34 @@ public class User extends BaseEntity {
     private boolean isDeleted = false;
 
 
-    public User(String username, String email, String password, Address address, BankAccount bankAccount, UserRole userRole) {
+    public User(String username, String email, String password, String phoneNumber, Address address, BankAccount bankAccount, UserRole userRole) {
         this.username = username;
         this.email = email;
         this.password = password;
+        this.phoneNumber = phoneNumber;
         this.address = address;
         this.bankAccount = bankAccount;
         this.userRole = userRole;
     }
 
-    public static User createBuyer(String username, String email, String password, Address address) {
+    public static User createBuyer(String username, String email, String password, String phoneNumber, Address address) {
         return new User(
                 username,
                 email,
                 password,
+                phoneNumber,
                 address,
                 null,
                 UserRole.USER);
     }
 
     // 판매자 회원 생성 메서드
-    public static User createSeller(String username, String email, String password, BankAccount bankAccount) {
+    public static User createSeller(String username, String email, String password, String phoneNumber, BankAccount bankAccount) {
         return new User(
                 username,
                 email,
                 password,
+                phoneNumber,
                 null,
                 bankAccount,
                 UserRole.ADMIN);
@@ -82,7 +87,7 @@ public class User extends BaseEntity {
 
     //소셜 로그인 생성
     public static User createSocialLoginUser(String nickname, String email) {
-        return new User(nickname, email,null,null, null,UserRole.USER);
+        return new User(nickname, email,null,null, null,null, UserRole.USER);
     }
 
 }
