@@ -1,4 +1,4 @@
-package com.gg.gong9.notification.util;
+package com.gg.gong9.notification.sms.util;
 
 public enum SmsNotificationType {
     GROUP_BUY_SUCCESS,     // 공고 모집 완료

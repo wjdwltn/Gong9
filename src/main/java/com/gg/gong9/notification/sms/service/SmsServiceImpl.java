@@ -1,4 +1,4 @@
-package com.gg.gong9.notification.SmsService;
+package com.gg.gong9.notification.sms.service;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
@@ -18,7 +18,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.*;
 
 @Service
-public class SmsService {
+public class SmsServiceImpl implements SmsService {
 
     @Value("${solapi.api-key}")
     private String apiKey;
@@ -46,7 +46,7 @@ public class SmsService {
 //    };
 //}
 
-    public void sendSms(String to, String text) {
+    public void sendMessage(String to, String text) {
         try {
             String date = ZonedDateTime.now(ZoneOffset.UTC)
                     .format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss'Z'"));

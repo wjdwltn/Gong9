@@ -1,4 +1,4 @@
-package com.gg.gong9.mail.service;
+package com.gg.gong9.notification.mail.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
