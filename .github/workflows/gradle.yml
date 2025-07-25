@@ -31,6 +31,9 @@ jobs:
       BUCKET_NAME: ${{ secrets.BUCKET_NAME }}
       S3_ACCESS_KEY: ${{ secrets.S3_ACCESS_KEY }}
       S3_SECRET_KEY: ${{ secrets.S3_SECRET_KEY }}
+      SOLAPI_API_KEY: ${{ secrets.SOLAPI_API_KEY }}
+      SOLAPI_API_SECRET: ${{ secrets.SOLAPI_API_SECRET }}
+      SOLAPI_SENDER_NUMBER: ${{ secrets.SOLAPI_SENDER_NUMBER }}
 
     runs-on: ubuntu-latest
     permissions:
