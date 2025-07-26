@@ -1,6 +1,6 @@
 package com.gg.gong9.groupbuy.controller;
 
-import com.gg.gong9.global.enums.GroupBuyStatus;
+import com.gg.gong9.global.enums.BuyStatus;
 import com.gg.gong9.global.security.jwt.CustomUserDetails;
 import com.gg.gong9.groupbuy.controller.dto.*;
 import com.gg.gong9.groupbuy.service.GroupBuyService;
@@ -52,7 +52,7 @@ public class GroupBuyController {
     // 마감 임박 공구 목록 조회
     @GetMapping("/urgent")
     public ResponseEntity<List<GroupBuyUrgentListResponseDto>> getGroupBuyListByUrgent() {
-        List<GroupBuyUrgentListResponseDto> response = groupBuyService.getGroupBuyUrgentList(GroupBuyStatus.RECRUITING);
+        List<GroupBuyUrgentListResponseDto> response = groupBuyService.getGroupBuyUrgentList(BuyStatus.RECRUITING);
         return ResponseEntity.ok(response);
     }
 
@@ -68,7 +68,7 @@ public class GroupBuyController {
     }
 
     // 공구 진행 취소
-    @PutMapping("{groupBuyId}/cancel")
+    @PutMapping("/{groupBuyId}/cancel")
     public ResponseEntity<GroupBuyResponse> cancelGroupBuy(
             @PathVariable Long groupBuyId,
             @AuthenticationPrincipal CustomUserDetails userDetails

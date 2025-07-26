@@ -1,6 +1,6 @@
 package com.gg.gong9.groupbuy.controller.dto;
 
-import com.gg.gong9.global.enums.GroupBuyStatus;
+import com.gg.gong9.global.enums.BuyStatus;
 import com.gg.gong9.groupbuy.entity.GroupBuy;
 import com.gg.gong9.global.enums.Category;
 
@@ -11,7 +11,7 @@ public record GroupBuyUrgentListResponseDto(
         String productName,
         int price,
         Category category,
-        GroupBuyStatus status,
+        BuyStatus status,
         LocalDateTime startAt,
         LocalDateTime endAt,
         int totalQuantity,

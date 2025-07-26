@@ -1,7 +1,7 @@
 package com.gg.gong9.groupbuy.entity;
 
 import com.gg.gong9.global.base.BaseEntity;
-import com.gg.gong9.global.enums.GroupBuyStatus;
+import com.gg.gong9.global.enums.BuyStatus;
 import com.gg.gong9.global.exception.exceptions.groupbuy.GroupBuyException;
 import com.gg.gong9.groupbuy.controller.dto.GroupBuyCreateRequestDto;
 import com.gg.gong9.groupbuy.controller.command.GroupBuyUpdateCommand;
@@ -35,7 +35,7 @@ public class GroupBuy extends BaseEntity {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
-    private GroupBuyStatus status;
+    private BuyStatus status;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "product_id")
@@ -46,7 +46,7 @@ public class GroupBuy extends BaseEntity {
     private User user;
 
 
-    private GroupBuy(int totalQuantity, int limitQuantity, LocalDateTime startAt, LocalDateTime endAt,  GroupBuyStatus status, Product product, User user) {
+    private GroupBuy(int totalQuantity, int limitQuantity, LocalDateTime startAt, LocalDateTime endAt, BuyStatus status, Product product, User user) {
         this.totalQuantity = totalQuantity;
         this.limitQuantity = limitQuantity;
         this.startAt = startAt;
@@ -63,7 +63,7 @@ public class GroupBuy extends BaseEntity {
                 dto.limitQuantity(),
                 dto.startAt(),
                 dto.endAt(),
-                GroupBuyStatus.BEFORE_START,
+                BuyStatus.BEFORE_START,
                 product,
                 user
         );
@@ -95,14 +95,14 @@ public class GroupBuy extends BaseEntity {
 
     public void updateStatus(){
         LocalDateTime now = LocalDateTime.now();
-        if (status == GroupBuyStatus.BEFORE_START && now.isAfter(startAt)) {
-            this.status = GroupBuyStatus.RECRUITING;
-        } else if (status == GroupBuyStatus.RECRUITING && now.isAfter(endAt)) {
-            this.status = GroupBuyStatus.COMPLETED;
+        if (status == BuyStatus.BEFORE_START && now.isAfter(startAt)) {
+            this.status = BuyStatus.RECRUITING;
+        } else if (status == BuyStatus.RECRUITING && now.isAfter(endAt)) {
+            this.status = BuyStatus.COMPLETED;
         }
     }
 
     public void cancel(){
-        this.status = GroupBuyStatus.CANCELED;
+        this.status = BuyStatus.CANCELED;
     }
 }

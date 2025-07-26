@@ -1,6 +1,6 @@
 package com.gg.gong9.global.enums;
 
-public enum GroupBuyStatus {
+public enum BuyStatus {
     BEFORE_START("모집 전"),
     RECRUITING("모집 중"),
     COMPLETED("모집 완료"),
@@ -8,7 +8,7 @@ public enum GroupBuyStatus {
 
     private final String value;
 
-    GroupBuyStatus(String value) {
+    BuyStatus(String value) {
         this.value = value;
     }
 

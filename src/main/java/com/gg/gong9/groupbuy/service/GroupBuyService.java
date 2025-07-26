@@ -5,7 +5,7 @@ import com.gg.gong9.global.exception.exceptions.product.ProductException;
 import com.gg.gong9.groupbuy.controller.command.GroupBuyUpdateCommand;
 import com.gg.gong9.groupbuy.controller.dto.*;
 import com.gg.gong9.groupbuy.entity.GroupBuy;
-import com.gg.gong9.global.enums.GroupBuyStatus;
+import com.gg.gong9.global.enums.BuyStatus;
 import com.gg.gong9.groupbuy.repository.GroupBuyRepository;
 import com.gg.gong9.groupbuy.controller.dto.GroupBuyListResponseDto;
 import com.gg.gong9.global.enums.Category;
@@ -62,7 +62,7 @@ public class GroupBuyService {
     }
 
     // 마감 임박 공구 목록 조회
-    public List<GroupBuyUrgentListResponseDto> getGroupBuyUrgentList(GroupBuyStatus status){
+    public List<GroupBuyUrgentListResponseDto> getGroupBuyUrgentList(BuyStatus status){
         List<GroupBuy> groupBuys = groupBuyRepository.findAllByStatusOrderByEndAtAsc(status);
 
         return groupBuys.stream()
@@ -129,19 +129,19 @@ public class GroupBuyService {
 
     private void validateOwner(GroupBuy groupBuy, User user) {
         if (!groupBuy.getUser().getId().equals(user.getId())) {
-            throw new GroupBuyException(NO_PERMISSION_GROUPBUY);
+            throw new GroupBuyException(NO_PERMISSION_GROUP_BUY);
         }
     }
 
     private void validateNotEnded(GroupBuy groupBuy) {
-        if (groupBuy.getStatus() == GroupBuyStatus.COMPLETED || groupBuy.getStatus() == GroupBuyStatus.CANCELED) {
+        if (groupBuy.getStatus() == BuyStatus.COMPLETED || groupBuy.getStatus() == BuyStatus.CANCELED) {
             throw new GroupBuyException(ALREADY_ENDED);
         }
     }
 
     private GroupBuy getGroupBuyOrThrow(Long groupBuyId) {
         return groupBuyRepository.findById(groupBuyId)
-                .orElseThrow(() -> new GroupBuyException(NOT_FOUND_GROUPBUY));
+                .orElseThrow(() -> new GroupBuyException(NOT_FOUND_GROUP_BUY));
     }
 
     private Product getProductOrThrow(Long productId) {

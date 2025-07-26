@@ -1,6 +1,6 @@
 package com.gg.gong9.groupbuy.controller.dto;
 
-import com.gg.gong9.global.enums.GroupBuyStatus;
+import com.gg.gong9.global.enums.BuyStatus;
 import com.gg.gong9.groupbuy.entity.GroupBuy;
 
 import java.time.LocalDateTime;
@@ -9,7 +9,7 @@ public record GroupBuyListResponseDto (
         Long id,
         String productName,
         int price,
-        GroupBuyStatus status,
+        BuyStatus status,
         LocalDateTime startAt,
         LocalDateTime endAt,
         int totalQuantity,
