@@ -39,4 +39,13 @@ public class S3Service {
             throw new S3Exception(S3ExceptionMessage.PRODUCT_NOT_FOUND);
         }
     }
+
+    public void deleteFile(String fileUrl) {
+        try {
+            String key = fileUrl.replace(baseUrl + "/", "");
+            amazonS3.deleteObject(bucket, key);
+        } catch (Exception e) {
+            throw new S3Exception(S3ExceptionMessage.FAILED_TO_DELETE);
+        }
+    }
 }

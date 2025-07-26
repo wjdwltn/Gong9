@@ -1,6 +1,7 @@
 package com.gg.gong9.product.entity;
 
 import com.gg.gong9.global.base.BaseEntity;
+import com.gg.gong9.global.enums.Category;
 import com.gg.gong9.product.controller.dto.ProductCreateRequestDto;
 import com.gg.gong9.user.entity.User;
 import jakarta.persistence.*;
