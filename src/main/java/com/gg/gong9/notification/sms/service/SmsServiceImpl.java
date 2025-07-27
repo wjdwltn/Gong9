@@ -33,21 +33,26 @@ public class SmsServiceImpl implements SmsService {
 
     private static final String API_URL = "https://api.solapi.com/messages/v4/send";
 
+    private static final String PREFIX = "[공구리]\n";
+
     public void sendByType(User user, SmsNotificationType type) {
         String phoneNumber = user.getPhoneNumber();
-        String message = generateMessageForType(type);
+        String userName = user.getUsername();
+        String message = generateMessageForType(type,userName);
         sendMessage(phoneNumber, message);
     }
 
-    private String generateMessageForType(SmsNotificationType type) {
-        return switch (type) {
+    private String generateMessageForType(SmsNotificationType type, String userName) {
+        String template = switch (type) {
             case GROUP_BUY_SUCCESS -> "공동구매 모집이 완료되었습니다!";
-            case GROUP_BUY_CANCELLED -> "공동구매가 취소되었습니다.";
-            case ORDER_SUCCESS -> "주문이 정상적으로 완료되었습니다!";
+            case GROUP_BUY_CANCELLED -> "공동구매 진행이 취소되었습니다. 환불 처리는 최대 3일 이내에 완료될 예정입니다.";
+            case ORDER_SUCCESS -> "%s님, 주문이 정상적으로 완료되었습니다!";
             case DELIVERY_STARTED -> "상품이 발송되었습니다!";
             case DELIVERY_COMPLETED -> "배송이 완료되었습니다. 감사합니다!";
             case REFUND_COMPLETED -> "환불이 정상적으로 처리되었습니다.";
         };
+
+        return PREFIX + (template.contains("%s") ? String.format(template, userName) : template);
     }
 
     public void sendMessage(String to, String text) {
