@@ -1,4 +1,4 @@
-package com.gg.gong9.groupbuy.service;
+package com.gg.gong9.groupbuy.handler;
 
 import com.gg.gong9.groupbuy.entity.GroupBuy;
 import com.gg.gong9.groupbuy.entity.Status;
