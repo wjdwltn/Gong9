@@ -77,7 +77,7 @@ public class ProductService {
     }
 
 
-    private Product getProductOrThrow(Long productId) {
+    public Product getProductOrThrow(Long productId) {
         return productRepository.findById(productId)
                 .orElseThrow(() -> new ProductException(PRODUCT_NOT_FOUND));
     }
