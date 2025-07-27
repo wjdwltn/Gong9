@@ -1,10 +1,12 @@
 package com.gg.gong9.user.controller.dto;
 import com.gg.gong9.user.entity.Address;
+import com.gg.gong9.user.entity.BankAccount;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
 import org.hibernate.validator.constraints.Length;
 
-public record JoinRequest (
+public record SellerJoinRequest(
 
         @NotNull
         @Email(message = "이메일 형식으로 입력해주세요.")
@@ -19,13 +21,17 @@ public record JoinRequest (
         String username,
 
         @NotNull
-        String postcode,
+        @Pattern(regexp = "^\\d{10,11}$", message = "'-'는 제외하여 작성해주세요.")
+        String phoneNumber,
 
         @NotNull
-        String detail
+        String bankName,
+
+        @NotNull
+        String accountNumber
 
 ){
-        public Address toAddress() {
-                return new Address(postcode, detail);
+        public BankAccount toBankAccount() {
+                return new BankAccount(bankName, accountNumber);
         }
 }

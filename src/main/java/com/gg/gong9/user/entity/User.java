@@ -24,8 +24,13 @@ public class User extends BaseEntity {
 
     private String password;
 
+    private String phoneNumber;
+
     @Embedded
-    private Address address;
+    private Address address; // 구매자만 사용
+
+    @Embedded
+    private BankAccount bankAccount; // 판매자만 사용
 
     @Enumerated(EnumType.STRING)
     private UserRole userRole;
@@ -33,13 +38,38 @@ public class User extends BaseEntity {
     @Column(name = "is_deleted", nullable = false)
     private boolean isDeleted = false;
 
-    @Builder
-    public User(String username, String email, String password, Address address, UserRole userRole) {
+
+    public User(String username, String email, String password, String phoneNumber, Address address, BankAccount bankAccount, UserRole userRole) {
         this.username = username;
         this.email = email;
         this.password = password;
+        this.phoneNumber = phoneNumber;
         this.address = address;
+        this.bankAccount = bankAccount;
         this.userRole = userRole;
+    }
+
+    public static User createBuyer(String username, String email, String password, String phoneNumber, Address address) {
+        return new User(
+                username,
+                email,
+                password,
+                phoneNumber,
+                address,
+                null,
+                UserRole.USER);
+    }
+
+    // 판매자 회원 생성 메서드
+    public static User createSeller(String username, String email, String password, String phoneNumber, BankAccount bankAccount) {
+        return new User(
+                username,
+                email,
+                password,
+                phoneNumber,
+                null,
+                bankAccount,
+                UserRole.ADMIN);
     }
 
     public void updateUser(String username, Address address) {
@@ -57,13 +87,7 @@ public class User extends BaseEntity {
 
     //소셜 로그인 생성
     public static User createSocialLoginUser(String nickname, String email) {
-        return User.builder()
-                .username(nickname)
-                .email(email)
-                .password(null)
-                .address(null)
-                .userRole(UserRole.USER)
-                .build();
+        return new User(nickname, email,null,null, null,null, UserRole.USER);
     }
 
 }

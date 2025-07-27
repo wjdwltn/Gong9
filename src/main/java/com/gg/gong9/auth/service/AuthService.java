@@ -13,12 +13,8 @@ import com.gg.gong9.global.security.cookie.CookieUtil;
 import com.gg.gong9.global.security.jwt.CustomUserDetailsService;
 import com.gg.gong9.global.security.jwt.JwtTokenProvider;
 import com.gg.gong9.mail.service.MailService;
-import com.gg.gong9.user.controller.dto.JoinRequest;
-import com.gg.gong9.user.controller.dto.LoginRequest;
-import com.gg.gong9.user.controller.dto.LoginResponse;
-import com.gg.gong9.user.controller.dto.UserIdResponse;
+import com.gg.gong9.user.controller.dto.*;
 import com.gg.gong9.user.entity.User;
-import com.gg.gong9.user.entity.UserRole;
 import com.gg.gong9.user.repository.UserRepository;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
@@ -47,17 +43,33 @@ public class AuthService {
     private static final String PASSWORD_RESET_CODE_PREFIX = "passwordResetCode:";
     private final CustomUserDetailsService customUserDetailsService;
 
-    //회원가입
-    public UserIdResponse join(JoinRequest joinRequest){
+    //구매자 회원가입
+    public UserIdResponse buyerJoin(BuyerJoinRequest joinRequest){
         checkEmailDuplication(joinRequest.email());
 
-        User user = User.builder()
-                .username(joinRequest.username())
-                .email(joinRequest.email())
-                .password(bCryptPasswordEncoder.encode(joinRequest.password()))
-                .address(joinRequest.toAddress())
-                .userRole(UserRole.USER)
-                .build();
+        User user = User.createBuyer(
+                joinRequest.username(),
+                joinRequest.email(),
+                bCryptPasswordEncoder.encode(joinRequest.password()),
+                joinRequest.phoneNumber(),
+                joinRequest.toAddress()
+        );
+
+        User savedUser = userRepository.save(user);
+        return new UserIdResponse(savedUser.getId());
+    }
+
+    //판매자 회원가입
+    public UserIdResponse sellerJoin(SellerJoinRequest joinRequest){
+        checkEmailDuplication(joinRequest.email());
+
+        User user = User.createSeller(
+                joinRequest.username(),
+                joinRequest.email(),
+                bCryptPasswordEncoder.encode(joinRequest.password()),
+                joinRequest.phoneNumber(),
+                joinRequest.toBankAccount()
+        );
 
         User savedUser = userRepository.save(user);
         return new UserIdResponse(savedUser.getId());

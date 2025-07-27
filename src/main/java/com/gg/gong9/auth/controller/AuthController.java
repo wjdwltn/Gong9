@@ -4,10 +4,7 @@ import com.gg.gong9.auth.controller.dto.*;
 import com.gg.gong9.auth.service.AuthService;
 import com.gg.gong9.global.security.cookie.CookieUtil;
 import com.gg.gong9.global.security.jwt.JwtTokenProvider;
-import com.gg.gong9.user.controller.dto.JoinRequest;
-import com.gg.gong9.user.controller.dto.LoginRequest;
-import com.gg.gong9.user.controller.dto.LoginResponse;
-import com.gg.gong9.user.controller.dto.UserIdResponse;
+import com.gg.gong9.user.controller.dto.*;
 import com.gg.gong9.user.entity.User;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -24,11 +21,22 @@ public class AuthController {
     private final AuthService authService;
     private final JwtTokenProvider jwtTokenProvider;
 
-    //회원가입
-    @PostMapping("/signup")
-    public ResponseEntity<UserIdResponse> signup(@Valid @RequestBody JoinRequest joinRequest) {
+    //구매자 회원가입
+    @PostMapping("/signup/buyer")
+    public ResponseEntity<UserIdResponse> signupBuyer(@Valid @RequestBody BuyerJoinRequest joinRequest) {
 
-        UserIdResponse userId = authService.join(joinRequest);
+        UserIdResponse userId = authService.buyerJoin(joinRequest);
+
+        return ResponseEntity
+                .status(HttpStatus.CREATED)
+                .body(userId);
+    }
+
+    //판매자 회원가입
+    @PostMapping("/signup/seller")
+    public ResponseEntity<UserIdResponse> signupSeller(@Valid @RequestBody SellerJoinRequest joinRequest) {
+
+        UserIdResponse userId = authService.sellerJoin(joinRequest);
 
         return ResponseEntity
                 .status(HttpStatus.CREATED)
