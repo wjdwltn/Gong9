@@ -1,5 +1,7 @@
 package com.gg.gong9.global.exception;
 
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -43,6 +45,20 @@ public class GlobalExceptionHandler {
         ErrorResponse error = ErrorResponse.from(BAD_REQUEST.value(), BAD_REQUEST.getReasonPhrase(), errorMsg);
 
         return ResponseEntity.badRequest().body(error);
+    }
+
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ResponseEntity<ErrorResponse> handleDataIntegrityViolation(DataIntegrityViolationException ex) {
+        Throwable rootCause = ex.getRootCause();
+
+        if (rootCause != null && rootCause.getMessage() != null
+                && rootCause.getMessage().toLowerCase().contains("duplicate")) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(
+                    new ErrorResponse(409, "Conflict", "중복 주문이 발생했습니다."));
+        }
+
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
+                new ErrorResponse(500, "Internal Server Error", "서버 오류가 발생했습니다."));
     }
 
     @ExceptionHandler(BaseException.class)
