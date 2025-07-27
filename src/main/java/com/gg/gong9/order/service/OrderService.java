@@ -7,6 +7,8 @@ import com.gg.gong9.groupbuy.entity.GroupBuy;
 import com.gg.gong9.groupbuy.entity.Status;
 import com.gg.gong9.groupbuy.repository.GroupBuyRepository;
 import com.gg.gong9.groupbuy.service.GroupBuyService;
+import com.gg.gong9.notification.sms.service.SmsService;
+import com.gg.gong9.notification.sms.util.SmsNotificationType;
 import com.gg.gong9.order.controller.dto.OrderDetailResponse;
 import com.gg.gong9.order.controller.dto.OrderListResponse;
 import com.gg.gong9.order.controller.dto.OrderRequest;
@@ -32,6 +34,7 @@ public class OrderService {
     private final UserService userService;
     private final GroupBuyService groupBuyService;
     private final GroupBuyRepository groupBuyRepository;
+    private final SmsService smsService;
 
     //주문 생성
     public Order createOrder(Long userId, OrderRequest request){
@@ -45,6 +48,7 @@ public class OrderService {
         existsByUserAndGroupBuy(user,groupBuy);
 
         //추후 동시성 문제 고려
+        //인원 확인 후 인원이 다 모이면 공구 모집 완료 메세지 구현
 
         Order order = Order.builder()
                 .quantity(request.quantity())
@@ -53,7 +57,12 @@ public class OrderService {
                 .groupBuy(groupBuy)
                 .build();
 
-        return orderRepository.save(order);
+        Order savedOrder = orderRepository.save(order);
+
+        //주문 성공 메세지
+        smsService.sendByType(user, SmsNotificationType.ORDER_SUCCESS);
+
+        return savedOrder;
     }
 
     //주문 목록 조회(내가 주문한 목록)
@@ -75,17 +84,8 @@ public class OrderService {
     @Transactional
     public void cancelOrder(Long userId, Long orderId){
         Order order = findByIdOrThrow(orderId);
-        checkOwner(order,userId);
 
-        if(order.getStatus() == OrderStatus.CANCELLED){
-            throw new OrderException(OrderExceptionMessage.ORDER_ALREADY_CANCELLED);
-        }
-
-        GroupBuy groupBuy = order.getGroupBuy();
-
-        if(groupBuy.getStatus() != Status.RECRUITING){
-            throw new OrderException(OrderExceptionMessage.ORDER_CANNOT_CANCEL);
-        }
+        validateOrderCancelable(order, userId);
 
         order.cancel();
 
@@ -116,6 +116,18 @@ public class OrderService {
     private void existsByUserAndGroupBuy(User user, GroupBuy groupBuy){
         if(orderRepository.existsByUserAndGroupBuy(user,groupBuy)){
             throw new OrderException(OrderExceptionMessage.DUPLICATE_ORDER);
+        }
+    }
+
+    private void validateOrderCancelable(Order order, Long userId) {
+        checkOwner(order, userId);
+
+        if (order.getStatus() == OrderStatus.CANCELLED) {
+            throw new OrderException(OrderExceptionMessage.ORDER_ALREADY_CANCELLED);
+        }
+
+        if (order.getGroupBuy().getStatus() != Status.RECRUITING) {
+            throw new OrderException(OrderExceptionMessage.ORDER_CANNOT_CANCEL);
         }
     }
 }

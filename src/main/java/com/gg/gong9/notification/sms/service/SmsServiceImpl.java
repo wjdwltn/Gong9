@@ -1,5 +1,7 @@
 package com.gg.gong9.notification.sms.service;
 
+import com.gg.gong9.notification.sms.util.SmsNotificationType;
+import com.gg.gong9.user.entity.User;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -31,20 +33,22 @@ public class SmsServiceImpl implements SmsService {
 
     private static final String API_URL = "https://api.solapi.com/messages/v4/send";
 
-//    public void sendStatusMessage(Order order) {
-//        String message = generateMessageForStatus(order.getStatus(), order);
-//        sendSms(order.getUser().getPhoneNumber(), message);
-//    }
-//
-//    private String generateMessageForType(SmsNotificationType type) {
-//    return switch (type) {
-//        case GROUP_BUY_SUCCESS -> "🎉 공동구매 모집이 완료되었습니다!";
-//        case GROUP_BUY_CANCELLED -> "❌ 공동구매가 취소되었습니다.";
-//        case DELIVERY_STARTED -> "📦 상품이 발송되었습니다!";
-//        case DELIVERY_COMPLETED -> "✅ 배송이 완료되었습니다. 감사합니다!";
-//        case REFUND_COMPLETED -> "💸 환불이 완료되었습니다.";
-//    };
-//}
+    public void sendByType(User user, SmsNotificationType type) {
+        String phoneNumber = user.getPhoneNumber();
+        String message = generateMessageForType(type);
+        sendMessage(phoneNumber, message);
+    }
+
+    private String generateMessageForType(SmsNotificationType type) {
+        return switch (type) {
+            case GROUP_BUY_SUCCESS -> "공동구매 모집이 완료되었습니다!";
+            case GROUP_BUY_CANCELLED -> "공동구매가 취소되었습니다.";
+            case ORDER_SUCCESS -> "주문이 정상적으로 완료되었습니다!";
+            case DELIVERY_STARTED -> "상품이 발송되었습니다!";
+            case DELIVERY_COMPLETED -> "배송이 완료되었습니다. 감사합니다!";
+            case REFUND_COMPLETED -> "환불이 정상적으로 처리되었습니다.";
+        };
+    }
 
     public void sendMessage(String to, String text) {
         try {

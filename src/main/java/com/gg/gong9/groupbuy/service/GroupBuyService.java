@@ -8,6 +8,10 @@ import com.gg.gong9.groupbuy.entity.GroupBuy;
 import com.gg.gong9.groupbuy.entity.Status;
 import com.gg.gong9.groupbuy.repository.GroupBuyRepository;
 import com.gg.gong9.groupbuy.controller.dto.GroupBuyListResponseDto;
+import com.gg.gong9.notification.sms.service.SmsService;
+import com.gg.gong9.notification.sms.util.SmsNotificationType;
+import com.gg.gong9.order.entity.Order;
+import com.gg.gong9.order.repository.OrderRepository;
 import com.gg.gong9.product.entity.Category;
 import com.gg.gong9.product.entity.Product;
 import com.gg.gong9.product.repository.ProductRepository;
@@ -15,6 +19,7 @@ import com.gg.gong9.user.entity.User;
 import com.gg.gong9.user.entity.UserRole;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -26,10 +31,14 @@ import static com.gg.gong9.global.exception.exceptions.product.ProductExceptionM
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class GroupBuyService {
 
     private final GroupBuyRepository groupBuyRepository;
     private final ProductRepository productRepository;
+    private final OrderRepository orderRepository;
+    private final SmsService smsService;
+    private final GroupBuyStatusHandler groupBuyStatusHandler;
 
     // 공구 등록
     @Transactional
@@ -100,6 +109,9 @@ public class GroupBuyService {
         validateNotEnded(groupBuy);
 
         groupBuy.cancel();
+
+        //모집중일때만 환불 및 취소 메세지 보내기
+        groupBuyStatusHandler.handleCancelled(groupBuy);
     }
 
 
