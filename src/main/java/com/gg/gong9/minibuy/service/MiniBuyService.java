@@ -81,15 +81,7 @@ public class MiniBuyService{
         MiniBuy miniBuy = getMiniBuyOrThrow(miniBuyId);
         validateMiniBuyOwner(miniBuy, user);
 
-//        if (file != null && !file.isEmpty()) {
-//            String oldImg = miniBuy.getProductImg();
-//            if (oldImg != null) s3Service.deleteFile(oldImg);
-//
-//            String newImageUrl = s3Service.uploadFile("miniBuy", file);
-//            miniBuy.updateProductImage(newImageUrl);
-//        }
         updateMiniBuyImage(file, miniBuy);
-
 
         MiniBuyUpdateCommand command = new MiniBuyUpdateCommand(
                 dto.productName(),
