@@ -1,9 +1,7 @@
 package com.gg.gong9.order.controller.dto;
 
 import com.gg.gong9.groupbuy.entity.GroupBuy;
-import com.gg.gong9.groupbuy.entity.Status;
 import com.gg.gong9.order.entity.Order;
-import com.gg.gong9.order.entity.OrderStatus;
 import com.gg.gong9.product.entity.Product;
 
 import java.time.LocalDateTime;

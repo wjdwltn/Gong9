@@ -7,8 +7,8 @@ import org.springframework.http.HttpStatus;
 @Getter
 @RequiredArgsConstructor
 public enum GroupBuyExceptionMessage {
-    NO_PERMISSION_GROUPBUY("해당 공구에 대한 권한이 없습니다.", HttpStatus.FORBIDDEN),
-    NOT_FOUND_GROUPBUY("해당 공동구매가 존재하지 않습니다.", HttpStatus.NOT_FOUND),
+    NO_PERMISSION_GROUP_BUY("해당 공구에 대한 권한이 없습니다.", HttpStatus.FORBIDDEN),
+    NOT_FOUND_GROUP_BUY("해당 공동구매가 존재하지 않습니다.", HttpStatus.NOT_FOUND),
     INVALID_OPERATION("결제된 수량보다 적은 총 수량으로 수정할 수 없습니다.", HttpStatus.BAD_REQUEST),
     ALREADY_ENDED("이미 종료된 공동구매는 취소할 수 없습니다.", HttpStatus.BAD_REQUEST),
     ONLY_SELLER_CAN_REGISTER("공구는 판매자의 경우만 등록할 수 있습니다.", HttpStatus.FORBIDDEN),
