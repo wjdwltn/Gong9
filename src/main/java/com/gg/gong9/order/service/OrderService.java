@@ -1,10 +1,10 @@
 package com.gg.gong9.order.service;
 
+import com.gg.gong9.global.enums.BuyStatus;
 import com.gg.gong9.global.exception.exceptions.groupbuy.GroupBuyException;
 import com.gg.gong9.global.exception.exceptions.order.OrderException;
 import com.gg.gong9.global.exception.exceptions.order.OrderExceptionMessage;
 import com.gg.gong9.groupbuy.entity.GroupBuy;
-import com.gg.gong9.groupbuy.entity.Status;
 import com.gg.gong9.groupbuy.repository.GroupBuyRepository;
 import com.gg.gong9.groupbuy.service.GroupBuyService;
 import com.gg.gong9.order.controller.dto.OrderDetailResponse;
@@ -22,7 +22,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import static com.gg.gong9.global.exception.exceptions.groupbuy.GroupBuyExceptionMessage.NOT_FOUND_GROUPBUY;
+import static com.gg.gong9.global.exception.exceptions.groupbuy.GroupBuyExceptionMessage.NOT_FOUND_GROUP_BUY;
 
 @Service
 @RequiredArgsConstructor
@@ -39,7 +39,7 @@ public class OrderService {
         User user = userService.findByIdOrThrow(userId);
 
         GroupBuy groupBuy = groupBuyRepository.findById(request.groupBuyId())
-                .orElseThrow(()->new GroupBuyException(NOT_FOUND_GROUPBUY));
+                .orElseThrow(()->new GroupBuyException(NOT_FOUND_GROUP_BUY));
 
         //주문 중복 검증
         existsByUserAndGroupBuy(user,groupBuy);
@@ -83,7 +83,7 @@ public class OrderService {
 
         GroupBuy groupBuy = order.getGroupBuy();
 
-        if(groupBuy.getStatus() != Status.RECRUITING){
+        if(groupBuy.getStatus() != BuyStatus.RECRUITING){
             throw new OrderException(OrderExceptionMessage.ORDER_CANNOT_CANCEL);
         }
 
