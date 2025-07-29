@@ -2,7 +2,7 @@ package com.gg.gong9.groupbuy.controller.dto;
 
 
 import com.gg.gong9.groupbuy.entity.GroupBuy;
-import com.gg.gong9.product.entity.Category;
+import com.gg.gong9.global.enums.Category;
 import com.gg.gong9.product.entity.Product;
 import com.gg.gong9.product.entity.ProductImg;
 

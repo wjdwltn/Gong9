@@ -7,11 +7,13 @@ import com.gg.gong9.groupbuy.controller.dto.*;
 import com.gg.gong9.groupbuy.entity.GroupBuy;
 import com.gg.gong9.groupbuy.entity.Status;
 import com.gg.gong9.groupbuy.handler.GroupBuyStatusHandler;
+import com.gg.gong9.global.enums.BuyStatus;
 import com.gg.gong9.groupbuy.repository.GroupBuyRepository;
 import com.gg.gong9.groupbuy.controller.dto.GroupBuyListResponseDto;
 import com.gg.gong9.notification.sms.service.SmsService;
 import com.gg.gong9.order.repository.OrderRepository;
 import com.gg.gong9.product.entity.Category;
+import com.gg.gong9.global.enums.Category;
 import com.gg.gong9.product.entity.Product;
 import com.gg.gong9.product.repository.ProductRepository;
 import com.gg.gong9.user.entity.User;
@@ -70,7 +72,7 @@ public class GroupBuyService {
     }
 
     // 마감 임박 공구 목록 조회
-    public List<GroupBuyUrgentListResponseDto> getGroupBuyUrgentList(Status status){
+    public List<GroupBuyUrgentListResponseDto> getGroupBuyUrgentList(BuyStatus status){
         List<GroupBuy> groupBuys = groupBuyRepository.findAllByStatusOrderByEndAtAsc(status);
 
         return groupBuys.stream()
@@ -140,19 +142,19 @@ public class GroupBuyService {
 
     private void validateOwner(GroupBuy groupBuy, User user) {
         if (!groupBuy.getUser().getId().equals(user.getId())) {
-            throw new GroupBuyException(NO_PERMISSION_GROUPBUY);
+            throw new GroupBuyException(NO_PERMISSION_GROUP_BUY);
         }
     }
 
     private void validateNotEnded(GroupBuy groupBuy) {
-        if (groupBuy.getStatus() == Status.COMPLETED || groupBuy.getStatus() == Status.CANCELED) {
+        if (groupBuy.getStatus() == BuyStatus.COMPLETED || groupBuy.getStatus() == BuyStatus.CANCELED) {
             throw new GroupBuyException(ALREADY_ENDED);
         }
     }
 
     private GroupBuy getGroupBuyOrThrow(Long groupBuyId) {
         return groupBuyRepository.findById(groupBuyId)
-                .orElseThrow(() -> new GroupBuyException(NOT_FOUND_GROUPBUY));
+                .orElseThrow(() -> new GroupBuyException(NOT_FOUND_GROUP_BUY));
     }
 
     private Product getProductOrThrow(Long productId) {
