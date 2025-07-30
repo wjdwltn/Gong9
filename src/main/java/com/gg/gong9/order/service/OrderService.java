@@ -5,7 +5,6 @@ import com.gg.gong9.global.exception.exceptions.groupbuy.GroupBuyException;
 import com.gg.gong9.global.exception.exceptions.order.OrderException;
 import com.gg.gong9.global.exception.exceptions.order.OrderExceptionMessage;
 import com.gg.gong9.groupbuy.entity.GroupBuy;
-import com.gg.gong9.groupbuy.entity.Status;
 import com.gg.gong9.groupbuy.repository.GroupBuyRepository;
 import com.gg.gong9.groupbuy.service.GroupBuyService;
 import com.gg.gong9.notification.sms.service.SmsService;
@@ -127,7 +126,7 @@ public class OrderService {
             throw new OrderException(OrderExceptionMessage.ORDER_ALREADY_CANCELLED);
         }
 
-        if (order.getGroupBuy().getStatus() != Status.RECRUITING) {
+        if (order.getGroupBuy().getStatus() != BuyStatus.RECRUITING) {
             throw new OrderException(OrderExceptionMessage.ORDER_CANNOT_CANCEL);
         }
     }

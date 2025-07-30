@@ -1,7 +1,7 @@
 package com.gg.gong9.groupbuy.handler;
 
+import com.gg.gong9.global.enums.BuyStatus;
 import com.gg.gong9.groupbuy.entity.GroupBuy;
-import com.gg.gong9.groupbuy.entity.Status;
 import com.gg.gong9.notification.sms.service.SmsService;
 import com.gg.gong9.notification.sms.util.SmsNotificationType;
 import com.gg.gong9.order.entity.Order;
@@ -22,7 +22,7 @@ public class GroupBuyStatusHandler {
     private final SmsService smsService;
 
     public void handleCancelled(GroupBuy groupBuy){
-        if (groupBuy.getStatus() != Status.CANCELED) return;
+        if (groupBuy.getStatus() != BuyStatus.CANCELED) return;
 
         List<Order> orders = orderRepository.findAllByGroupBuy(groupBuy);
 

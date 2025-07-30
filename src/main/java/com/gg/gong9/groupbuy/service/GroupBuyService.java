@@ -5,14 +5,12 @@ import com.gg.gong9.global.exception.exceptions.product.ProductException;
 import com.gg.gong9.groupbuy.controller.command.GroupBuyUpdateCommand;
 import com.gg.gong9.groupbuy.controller.dto.*;
 import com.gg.gong9.groupbuy.entity.GroupBuy;
-import com.gg.gong9.groupbuy.entity.Status;
 import com.gg.gong9.groupbuy.handler.GroupBuyStatusHandler;
 import com.gg.gong9.global.enums.BuyStatus;
 import com.gg.gong9.groupbuy.repository.GroupBuyRepository;
 import com.gg.gong9.groupbuy.controller.dto.GroupBuyListResponseDto;
 import com.gg.gong9.notification.sms.service.SmsService;
 import com.gg.gong9.order.repository.OrderRepository;
-import com.gg.gong9.product.entity.Category;
 import com.gg.gong9.global.enums.Category;
 import com.gg.gong9.product.entity.Product;
 import com.gg.gong9.product.repository.ProductRepository;
@@ -27,8 +25,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import static com.gg.gong9.global.exception.exceptions.groupbuy.GroupBuyExceptionMessage.*;
-import static com.gg.gong9.global.exception.exceptions.product.ProductExceptionMessage.NO_PERMISSION_PRODUCT;
-import static com.gg.gong9.global.exception.exceptions.product.ProductExceptionMessage.PRODUCT_NOT_FOUND;
+import static com.gg.gong9.global.exception.exceptions.product.ProductExceptionMessage.*;
 
 @Service
 @RequiredArgsConstructor
