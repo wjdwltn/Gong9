@@ -12,7 +12,7 @@ import com.gg.gong9.global.exception.exceptions.user.UserExceptionMessage;
 import com.gg.gong9.global.security.cookie.CookieUtil;
 import com.gg.gong9.global.security.jwt.CustomUserDetailsService;
 import com.gg.gong9.global.security.jwt.JwtTokenProvider;
-import com.gg.gong9.mail.service.MailService;
+import com.gg.gong9.notification.mail.service.MailService;
 import com.gg.gong9.user.controller.dto.*;
 import com.gg.gong9.user.entity.User;
 import com.gg.gong9.user.repository.UserRepository;

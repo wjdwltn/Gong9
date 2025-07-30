@@ -14,6 +14,8 @@ import java.util.Optional;
 public interface OrderRepository extends JpaRepository<Order, Long> {
     List<Order> findAllByUserId(Long userId);
 
+    List<Order> findAllByGroupBuy(GroupBuy groupBuy);
+
     Optional<Order> findByIdAndIsDeletedFalse(Long id);
 
     boolean existsByUserAndGroupBuy(User user, GroupBuy groupBuy);

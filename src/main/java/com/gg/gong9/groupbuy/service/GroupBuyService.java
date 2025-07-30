@@ -5,9 +5,12 @@ import com.gg.gong9.global.exception.exceptions.product.ProductException;
 import com.gg.gong9.groupbuy.controller.command.GroupBuyUpdateCommand;
 import com.gg.gong9.groupbuy.controller.dto.*;
 import com.gg.gong9.groupbuy.entity.GroupBuy;
+import com.gg.gong9.groupbuy.handler.GroupBuyStatusHandler;
 import com.gg.gong9.global.enums.BuyStatus;
 import com.gg.gong9.groupbuy.repository.GroupBuyRepository;
 import com.gg.gong9.groupbuy.controller.dto.GroupBuyListResponseDto;
+import com.gg.gong9.notification.sms.service.SmsService;
+import com.gg.gong9.order.repository.OrderRepository;
 import com.gg.gong9.global.enums.Category;
 import com.gg.gong9.product.entity.Product;
 import com.gg.gong9.product.repository.ProductRepository;
@@ -15,21 +18,25 @@ import com.gg.gong9.user.entity.User;
 import com.gg.gong9.user.entity.UserRole;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.stream.Collectors;
 
 import static com.gg.gong9.global.exception.exceptions.groupbuy.GroupBuyExceptionMessage.*;
-import static com.gg.gong9.global.exception.exceptions.product.ProductExceptionMessage.NO_PERMISSION_PRODUCT;
-import static com.gg.gong9.global.exception.exceptions.product.ProductExceptionMessage.PRODUCT_NOT_FOUND;
+import static com.gg.gong9.global.exception.exceptions.product.ProductExceptionMessage.*;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class GroupBuyService {
 
     private final GroupBuyRepository groupBuyRepository;
     private final ProductRepository productRepository;
+    private final OrderRepository orderRepository;
+    private final SmsService smsService;
+    private final GroupBuyStatusHandler groupBuyStatusHandler;
 
     // 공구 등록
     @Transactional
@@ -100,6 +107,9 @@ public class GroupBuyService {
         validateNotEnded(groupBuy);
 
         groupBuy.cancel();
+
+        //모집중일때만 환불 및 취소 메세지 보내기
+        groupBuyStatusHandler.handleCancelled(groupBuy);
     }
 
 
