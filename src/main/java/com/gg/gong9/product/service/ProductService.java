@@ -1,6 +1,7 @@
 package com.gg.gong9.product.service;
 
 import com.gg.gong9.global.exception.exceptions.product.ProductException;
+import com.gg.gong9.global.exception.exceptions.product.ProductExceptionMessage;
 import com.gg.gong9.product.controller.dto.*;
 import com.gg.gong9.product.entity.Product;
 import com.gg.gong9.product.repository.ProductRepository;
@@ -14,7 +15,6 @@ import org.springframework.web.multipart.MultipartFile;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import static com.gg.gong9.global.exception.exceptions.product.ProductExceptionMessage.*;
 
 
 @Service
@@ -28,7 +28,7 @@ public class ProductService {
     @Transactional
     public Product createProduct(ProductCreateRequestDto dto, List<MultipartFile> files, User user) {
         if (user.getUserRole() != UserRole.ADMIN) {
-            throw new ProductException(NOT_ADMIN);
+            throw new ProductException(ProductExceptionMessage.NOT_ADMIN);
         }
         Product product = Product.create(dto, user);
         productImgService.saveProductImgs(product, files);
@@ -79,7 +79,7 @@ public class ProductService {
 
     public Product getProductOrThrow(Long productId) {
         return productRepository.findById(productId)
-                .orElseThrow(() -> new ProductException(PRODUCT_NOT_FOUND));
+                .orElseThrow(() -> new ProductException(ProductExceptionMessage.PRODUCT_NOT_FOUND));
     }
 
     private void deleteProductImagesIfNecessary(List<Long> deleteImgIds) {
@@ -96,7 +96,7 @@ public class ProductService {
 
     private void validateProductOwner(Product product, User user) {
         if (!product.getUser().getId().equals(user.getId())) {
-            throw new ProductException(NO_PERMISSION_PRODUCT);
+            throw new ProductException(ProductExceptionMessage.NO_PERMISSION_PRODUCT);
         }
     }
 

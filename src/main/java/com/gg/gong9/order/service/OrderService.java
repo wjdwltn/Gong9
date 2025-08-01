@@ -2,6 +2,7 @@ package com.gg.gong9.order.service;
 
 import com.gg.gong9.global.enums.BuyStatus;
 import com.gg.gong9.global.exception.exceptions.groupbuy.GroupBuyException;
+import com.gg.gong9.global.exception.exceptions.groupbuy.GroupBuyExceptionMessage;
 import com.gg.gong9.global.exception.exceptions.order.OrderException;
 import com.gg.gong9.global.exception.exceptions.order.OrderExceptionMessage;
 import com.gg.gong9.groupbuy.entity.GroupBuy;
@@ -24,7 +25,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import static com.gg.gong9.global.exception.exceptions.groupbuy.GroupBuyExceptionMessage.NOT_FOUND_GROUP_BUY;
 
 @Service
 @RequiredArgsConstructor
@@ -42,7 +42,7 @@ public class OrderService {
         User user = userService.findByIdOrThrow(userId);
 
         GroupBuy groupBuy = groupBuyRepository.findById(request.groupBuyId())
-                .orElseThrow(()->new GroupBuyException(NOT_FOUND_GROUP_BUY));
+                .orElseThrow(()->new GroupBuyException(GroupBuyExceptionMessage.NOT_FOUND_GROUP_BUY));
 
         //주문 중복 검증
         existsByUserAndGroupBuy(user,groupBuy);
