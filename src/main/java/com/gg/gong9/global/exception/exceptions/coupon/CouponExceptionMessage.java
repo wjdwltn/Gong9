@@ -15,7 +15,9 @@ public enum CouponExceptionMessage {
     COUPON_NO_AUTHORITY("해당 쿠폰에 대한 권한이 없습니다.", HttpStatus.FORBIDDEN),
 
     COUPON_ALREADY_STARTED("이벤트 시작 이후 쿠폰은 수정이 불가능합니다.", HttpStatus.BAD_REQUEST),
-    COUPON_DELETE_FORBIDDEN("이벤트 시작 이후 쿠폰은 쿠폰은 삭제가 불가능합니다.", HttpStatus.BAD_REQUEST),;
+    COUPON_DELETE_FORBIDDEN("이벤트 시작 이후 쿠폰은 쿠폰은 삭제가 불가능합니다.", HttpStatus.BAD_REQUEST),
+
+    INVALID_END_TIME("종료 시간은 시작 시간보다 이후여야 합니다.", HttpStatus.BAD_REQUEST);
 
     private final String text;
     private final HttpStatus status;
