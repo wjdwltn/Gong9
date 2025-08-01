@@ -40,7 +40,7 @@ public class CouponController {
     @PutMapping("/{couponId}")
     public ResponseEntity<CouponResponse> updateCoupon(
             @PathVariable Long couponId,
-            @RequestBody CouponUpdateRequestDto dto,
+            @Valid @RequestBody CouponUpdateRequestDto dto,
             @AuthenticationPrincipal CustomUserDetails userDetails
             ){
         couponService.updateCoupon(couponId, dto, userDetails.getUser());
