@@ -37,6 +37,30 @@ public class Coupon extends BaseEntity {
     private User user;
 
 
+    public static Coupon create(String name, int quantity, int discount, int min_order_price,
+                                LocalDateTime startAt, LocalDateTime endAt, User user) {
+        Coupon coupon = new Coupon();
+        coupon.name = name;
+        coupon.quantity = quantity;
+        coupon.discount = discount;
+        coupon.min_order_price = min_order_price;
+        coupon.startAt = startAt;
+        coupon.endAt = endAt;
+        coupon.user = user;
+        return coupon;
+    }
 
+    public void update(String name, int quantity, int min_order_price,int discount, LocalDateTime startAt, LocalDateTime endAt) {
+        this.name = name;
+        this.quantity = quantity;
+        this.min_order_price = min_order_price;
+        this.discount = discount;
+        this.startAt = startAt;
+        this.endAt = endAt;
+    }
+
+    public boolean editable() {
+        return LocalDateTime.now().isBefore(this.startAt);
+    }
 
 }
