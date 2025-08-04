@@ -28,6 +28,9 @@ public class GroupBuy extends BaseEntity {
     private Long id;
 
     private int totalQuantity;
+
+    private int remainingQuantity;
+
     private int limitQuantity;
 
     private LocalDateTime startAt;
@@ -45,9 +48,13 @@ public class GroupBuy extends BaseEntity {
     @JoinColumn(name = "user_id")
     private User user;
 
+    @Version
+    private Long version;
 
-    private GroupBuy(int totalQuantity, int limitQuantity, LocalDateTime startAt, LocalDateTime endAt, BuyStatus status, Product product, User user) {
+
+    private GroupBuy(int totalQuantity, int remainingQuantity ,int limitQuantity, LocalDateTime startAt, LocalDateTime endAt, BuyStatus status, Product product, User user) {
         this.totalQuantity = totalQuantity;
+        this.remainingQuantity = remainingQuantity;
         this.limitQuantity = limitQuantity;
         this.startAt = startAt;
         this.endAt = endAt;
@@ -59,6 +66,7 @@ public class GroupBuy extends BaseEntity {
 
     public static GroupBuy create(GroupBuyCreateRequestDto dto, Product product, User user) {
         return new GroupBuy(
+                dto.totalQuantity(),
                 dto.totalQuantity(),
                 dto.limitQuantity(),
                 dto.startAt(),
@@ -104,5 +112,12 @@ public class GroupBuy extends BaseEntity {
 
     public void cancel(){
         this.status = BuyStatus.CANCELED;
+    }
+
+    public void decreaseRemainingQuantity(int amount){
+        if(this.remainingQuantity < amount){
+            throw new IllegalStateException("남은 수량이 부족합니다.");
+        }
+        this.remainingQuantity -= amount;
     }
 }
