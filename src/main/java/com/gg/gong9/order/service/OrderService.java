@@ -17,52 +17,83 @@ import com.gg.gong9.order.entity.OrderStatus;
 import com.gg.gong9.order.repository.OrderRepository;
 import com.gg.gong9.user.entity.User;
 import com.gg.gong9.user.service.UserService;
+import jakarta.persistence.OptimisticLockException;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
 
 import static com.gg.gong9.global.exception.exceptions.groupbuy.GroupBuyExceptionMessage.NOT_FOUND_GROUP_BUY;
+import static java.rmi.server.LogStream.log;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class OrderService {
 
     private final OrderRepository orderRepository;
     private final UserService userService;
-    private final GroupBuyService groupBuyService;
     private final GroupBuyRepository groupBuyRepository;
     private final SmsService smsService;
 
+
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public Order createOrderTransaction(Long userId, OrderRequest request) {
+        User user = userService.findByIdOrThrow(userId);
+
+        GroupBuy groupBuy = groupBuyRepository.findById(request.groupBuyId())
+                .orElseThrow(() -> new RuntimeException("GroupBuy not found"));
+
+        existsByUserAndGroupBuy(user, groupBuy);
+
+        groupBuy.decreaseRemainingQuantity(request.quantity());
+
+        return createAndSaveOrder(user, groupBuy, request.quantity());
+    }
+
     //주문 생성
+    @Transactional
     public Order createOrder(Long userId, OrderRequest request){
 
         User user = userService.findByIdOrThrow(userId);
 
-        GroupBuy groupBuy = groupBuyRepository.findById(request.groupBuyId())
-                .orElseThrow(()->new GroupBuyException(NOT_FOUND_GROUP_BUY));
+        GroupBuy groupBuy = groupBuyRepository.findByIdWithPessimisticLock(request.groupBuyId())
+                .orElseThrow(() -> new GroupBuyException(NOT_FOUND_GROUP_BUY));
 
-        //주문 중복 검증
-        existsByUserAndGroupBuy(user,groupBuy);
+        existsByUserAndGroupBuy(user, groupBuy);
+        groupBuy.decreaseRemainingQuantity(request.quantity());
 
-        //추후 동시성 문제 고려
-        //인원 확인 후 인원이 다 모이면 공구 모집 완료 메세지 구현
+//        인원 확인 후 인원이 다 모이면 공구 모집 완료 메세지 구현
+//         남은 수량이 0이 되면 모집 완료 메시지
+        if (groupBuy.getRemainingQuantity() == 0) {
+            log.info("인원 모집이 완료되었습니다.");
+        }
 
-        Order order = Order.builder()
-                .quantity(request.quantity())
-                .status(OrderStatus.PAYMENT_COMPLETED)
-                .user(user)
-                .groupBuy(groupBuy)
-                .build();
-
-        Order savedOrder = orderRepository.save(order);
-
-        //주문 성공 메세지
+//        주문 성공 메세지
         smsService.sendByType(user, SmsNotificationType.ORDER_SUCCESS);
 
-        return savedOrder;
+        return createAndSaveOrder(user, groupBuy, request.quantity());
+    }
+
+    @Transactional
+    public Order tryCreateOrderOnce(Long userId, OrderRequest request) {
+        User user = userService.findByIdOrThrow(userId);
+
+        GroupBuy groupBuy = groupBuyRepository.findById(request.groupBuyId())
+                .orElseThrow(() -> new RuntimeException("GroupBuy not found"));
+
+        existsByUserAndGroupBuy(user, groupBuy);
+
+        groupBuy.decreaseRemainingQuantity(request.quantity());
+
+        return createAndSaveOrder(user, groupBuy, request.quantity());
     }
 
     //주문 목록 조회(내가 주문한 목록)
@@ -94,6 +125,7 @@ public class OrderService {
     }
 
     //주문 삭제(주문 목록에서)
+    @Transactional
     public void deleteOrder(Long userId, Long orderId){
         Order order = findByIdOrThrow(orderId);
         checkOwner(order,userId);
@@ -101,6 +133,22 @@ public class OrderService {
     }
 
     //검즘
+
+    public GroupBuy validateAndGetGroupBuy(OrderRequest request) {
+        GroupBuy groupBuy = groupBuyRepository.findById(request.groupBuyId())
+                .orElseThrow(() -> new GroupBuyException(NOT_FOUND_GROUP_BUY));
+        return groupBuy;
+    }
+
+    public Order createAndSaveOrder(User user, GroupBuy groupBuy, int quantity) {
+        Order order = Order.builder()
+                .quantity(quantity)
+                .status(OrderStatus.PAYMENT_COMPLETED)
+                .user(user)
+                .groupBuy(groupBuy)
+                .build();
+        return orderRepository.save(order);
+    }
 
     private void checkOwner(Order order, Long userId){
         if(!order.getUser().getId().equals(userId)){
@@ -113,7 +161,7 @@ public class OrderService {
                 .orElseThrow(()-> new OrderException(OrderExceptionMessage.ORDER_NOT_FOUND));
     }
 
-    private void existsByUserAndGroupBuy(User user, GroupBuy groupBuy){
+    public void existsByUserAndGroupBuy(User user, GroupBuy groupBuy){
         if(orderRepository.existsByUserAndGroupBuy(user,groupBuy)){
             throw new OrderException(OrderExceptionMessage.DUPLICATE_ORDER);
         }
