@@ -48,8 +48,8 @@ public class GroupBuy extends BaseEntity {
     @JoinColumn(name = "user_id")
     private User user;
 
-    @Version
-    private Long version;
+//    @Version
+//    private Long version;
 
 
     private GroupBuy(int totalQuantity, int remainingQuantity ,int limitQuantity, LocalDateTime startAt, LocalDateTime endAt, BuyStatus status, Product product, User user) {

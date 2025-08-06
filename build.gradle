@@ -59,6 +59,10 @@ dependencies {
     //Redisson
     implementation 'org.redisson:redisson-spring-boot-starter:3.24.3'
 
+    //Kafka
+    implementation 'org.springframework.kafka:spring-kafka'
+    implementation 'com.fasterxml.jackson.core:jackson-databind'
+
     testImplementation 'org.springframework.security:spring-security-test'
     compileOnly 'org.projectlombok:lombok'
     runtimeOnly 'com.mysql:mysql-connector-j'

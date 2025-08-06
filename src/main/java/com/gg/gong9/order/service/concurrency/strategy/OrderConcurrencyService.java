@@ -4,13 +4,17 @@ import com.gg.gong9.global.exception.exceptions.groupbuy.GroupBuyException;
 import com.gg.gong9.global.handler.RedissonHandler;
 import com.gg.gong9.groupbuy.entity.GroupBuy;
 import com.gg.gong9.groupbuy.repository.GroupBuyRepository;
+import com.gg.gong9.notification.sms.service.SmsService;
+import com.gg.gong9.notification.sms.util.SmsNotificationType;
 import com.gg.gong9.order.controller.dto.OrderRequest;
 import com.gg.gong9.order.entity.Order;
 import com.gg.gong9.order.service.OrderRedisStockService;
 import com.gg.gong9.order.service.OrderService;
 import com.gg.gong9.user.entity.User;
 import com.gg.gong9.user.service.UserService;
+import jakarta.persistence.EntityManager;
 import jakarta.persistence.OptimisticLockException;
+import jakarta.persistence.PersistenceContext;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.redisson.api.RedissonClient;
@@ -33,8 +37,7 @@ public class OrderConcurrencyService {
     private final RedissonClient redissonClient;
     private final GroupBuyRepository gbRepository;
     private final RedissonHandler redissonHandler;
-
-    private final String ORDER_GROUP_BUY_KEY = "lock:groupbuy:";
+    private final SmsService smsService;
 
     //낙관적 락(기본)
     public Order createOrder_Opti(Long userId, OrderRequest request) {
@@ -77,9 +80,14 @@ public class OrderConcurrencyService {
     }
 
 
+    @PersistenceContext
+    private EntityManager em;
+
     //비관적 락
-    @Transactional
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public Order createOrderWithPess(Long userId, OrderRequest request){
+
+        em.clear(); // 1차 캐시 클리어
 
         User user = userService.findByIdOrThrow(userId);
 
@@ -90,10 +98,13 @@ public class OrderConcurrencyService {
             throw new RuntimeException("락 획득 실패");
         }
 
-        orderService.existsByUserAndGroupBuy(user, groupBuy);
-        groupBuy.decreaseRemainingQuantity(request.quantity());
+        orderService.existsByUserAndGroupBuy(user, groupBuy); // 중복 주문 검사
+        groupBuy.decreaseRemainingQuantity(request.quantity()); // db 재고 감소
 
-        return orderService.createAndSaveOrder(user, groupBuy, request.quantity());
+        //주문 성공 메세지
+        //smsService.sendByType(user, SmsNotificationType.ORDER_SUCCESS);
+
+        return orderService.createAndSaveOrder(user, groupBuy, request.quantity()); // 주문 저장
     }
 
     //Redisson 분산락
