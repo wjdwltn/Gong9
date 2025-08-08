@@ -33,13 +33,13 @@ public class OrderController {
     }
 
     //주문 생성
-    @PostMapping
-    public ResponseEntity<OrderResponse> create(@RequestBody OrderRequest request,
-                                                @AuthenticationPrincipal CustomUserDetails userPrincipal){
-        Long userId = userPrincipal.getUser().getId();
-        Order order = orderLauScriptService.tryCreateOrderWithRedis(userId, request);
-        return ResponseEntity.ok(new OrderResponse(order.getId(),"주문이 생성되었습니다."));
-    }
+//    @PostMapping
+//    public ResponseEntity<OrderResponse> create(@RequestBody OrderRequest request,
+//                                                @AuthenticationPrincipal CustomUserDetails userPrincipal){
+//        Long userId = userPrincipal.getUser().getId();
+//        Order order = orderLauScriptService.tryCreateOrderWithRedis(userId, request);
+//        return ResponseEntity.ok(new OrderResponse(order.getId(),"주문이 생성되었습니다."));
+//    }
 
     //주문 목록 조회(내가 주문한 목록)
     @GetMapping("/me")

@@ -1,14 +1,14 @@
 package com.gg.gong9.order.service.concurrency.strategy;
 
+import com.gg.gong9.global.enums.BuyStatus;
 import com.gg.gong9.global.exception.exceptions.groupbuy.GroupBuyException;
 import com.gg.gong9.global.handler.RedissonHandler;
 import com.gg.gong9.groupbuy.entity.GroupBuy;
 import com.gg.gong9.groupbuy.repository.GroupBuyRepository;
 import com.gg.gong9.notification.sms.service.SmsService;
-import com.gg.gong9.notification.sms.util.SmsNotificationType;
 import com.gg.gong9.order.controller.dto.OrderRequest;
+import com.gg.gong9.order.controller.dto.OrderWithCompletion;
 import com.gg.gong9.order.entity.Order;
-import com.gg.gong9.order.service.OrderRedisStockService;
 import com.gg.gong9.order.service.OrderService;
 import com.gg.gong9.user.entity.User;
 import com.gg.gong9.user.service.UserService;
@@ -18,12 +18,13 @@ import jakarta.persistence.PersistenceContext;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.redisson.api.RedissonClient;
-import org.springframework.dao.DeadlockLoserDataAccessException;
 import org.springframework.dao.PessimisticLockingFailureException;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
 
 import static com.gg.gong9.global.exception.exceptions.groupbuy.GroupBuyExceptionMessage.NOT_FOUND_GROUP_BUY;
 
@@ -85,26 +86,29 @@ public class OrderConcurrencyService {
 
     //비관적 락
     @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public Order createOrderWithPess(Long userId, OrderRequest request){
+    public OrderWithCompletion createOrderWithPess(Long userId, OrderRequest request){
 
         em.clear(); // 1차 캐시 클리어
 
         User user = userService.findByIdOrThrow(userId);
 
-        GroupBuy groupBuy;
-        try {
-            groupBuy = getGroupBuyWithLock(request.groupBuyId());
-        } catch (PessimisticLockingFailureException e) {
-            throw new RuntimeException("락 획득 실패");
-        }
+        GroupBuy groupBuy = getGroupBuyWithLockOrThrow(request.groupBuyId());
 
         orderService.existsByUserAndGroupBuy(user, groupBuy); // 중복 주문 검사
         groupBuy.decreaseRemainingQuantity(request.quantity()); // db 재고 감소
 
-        //주문 성공 메세지
-        //smsService.sendByType(user, SmsNotificationType.ORDER_SUCCESS);
+        Order order = orderService.createAndSaveOrder(user, groupBuy, request.quantity());//주문 저장
 
-        return orderService.createAndSaveOrder(user, groupBuy, request.quantity()); // 주문 저장
+        boolean groupBuyCompleted = false;
+        List<User> allUsers = List.of();
+        if (groupBuy.getRemainingQuantity() == 0 && groupBuy.getStatus() != BuyStatus.COMPLETED) {
+            groupBuy.markAsCompleted();
+            groupBuyCompleted = true;
+
+            allUsers = orderService.findAllUsersByGroupBuy(groupBuy.getId());
+        }
+
+        return new OrderWithCompletion(order, groupBuyCompleted, allUsers);
     }
 
     //Redisson 분산락
@@ -132,6 +136,14 @@ public class OrderConcurrencyService {
     public GroupBuy getGroupBuyWithLock(Long groupBuyId) {
         return gbRepository.findByIdWithPessimisticLock(groupBuyId)
                 .orElseThrow(() -> new GroupBuyException(NOT_FOUND_GROUP_BUY));
+    }
+
+    private GroupBuy getGroupBuyWithLockOrThrow(Long groupBuyId) {
+        try {
+            return getGroupBuyWithLock(groupBuyId);
+        } catch (PessimisticLockingFailureException e) {
+            throw new RuntimeException("락 획득 실패", e);
+        }
     }
 
 }

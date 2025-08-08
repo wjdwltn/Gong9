@@ -6,9 +6,7 @@ import com.gg.gong9.global.exception.exceptions.order.OrderException;
 import com.gg.gong9.global.exception.exceptions.order.OrderExceptionMessage;
 import com.gg.gong9.groupbuy.entity.GroupBuy;
 import com.gg.gong9.groupbuy.repository.GroupBuyRepository;
-import com.gg.gong9.groupbuy.service.GroupBuyService;
 import com.gg.gong9.notification.sms.service.SmsService;
-import com.gg.gong9.notification.sms.util.SmsNotificationType;
 import com.gg.gong9.order.controller.dto.OrderDetailResponse;
 import com.gg.gong9.order.controller.dto.OrderListResponse;
 import com.gg.gong9.order.controller.dto.OrderRequest;
@@ -16,22 +14,18 @@ import com.gg.gong9.order.entity.Order;
 import com.gg.gong9.order.entity.OrderStatus;
 import com.gg.gong9.order.repository.OrderRepository;
 import com.gg.gong9.user.entity.User;
+import com.gg.gong9.user.repository.UserRepository;
 import com.gg.gong9.user.service.UserService;
-import jakarta.persistence.OptimisticLockException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
 
 import static com.gg.gong9.global.exception.exceptions.groupbuy.GroupBuyExceptionMessage.NOT_FOUND_GROUP_BUY;
-import static java.rmi.server.LogStream.log;
 
 @Service
 @RequiredArgsConstructor
@@ -42,6 +36,7 @@ public class OrderService {
     private final UserService userService;
     private final GroupBuyRepository groupBuyRepository;
     private final SmsService smsService;
+    private final UserRepository userRepository;
 
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
@@ -77,7 +72,7 @@ public class OrderService {
         }
 
 //        주문 성공 메세지
-        smsService.sendByType(user, SmsNotificationType.ORDER_SUCCESS);
+       // smsService.sendByType(user, SmsNotificationType.ORDER_SUCCESS);
 
         return createAndSaveOrder(user, groupBuy, request.quantity());
     }
@@ -177,5 +172,9 @@ public class OrderService {
         if (order.getGroupBuy().getStatus() != BuyStatus.RECRUITING) {
             throw new OrderException(OrderExceptionMessage.ORDER_CANNOT_CANCEL);
         }
+    }
+
+    public List<User> findAllUsersByGroupBuy(Long groupBuyId){
+        return userRepository.findDistinctUsersByOrdersGroupBuyId(groupBuyId);
     }
 }

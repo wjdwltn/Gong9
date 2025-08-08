@@ -51,7 +51,7 @@ public class KafkaConsumerConfig {
         Map<String, Object> props = new HashMap<>();
 
         props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
-        props.put(ConsumerConfig.GROUP_ID_CONFIG, groupId);
+        //props.put(ConsumerConfig.GROUP_ID_CONFIG, groupId);
         props.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, earliest);
         props.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, autoCommit);
         props.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
@@ -98,6 +98,7 @@ public class KafkaConsumerConfig {
     @Bean
     public DefaultErrorHandler errorHandler(DeadLetterPublishingRecoverer deadLetterPublishingRecoverer) {
         DefaultErrorHandler handler = new DefaultErrorHandler(deadLetterPublishingRecoverer, new FixedBackOff(1000L, 3));
+
 
         // 💡 비즈니스 예외는 재시도 x
         handler.addNotRetryableExceptions(
