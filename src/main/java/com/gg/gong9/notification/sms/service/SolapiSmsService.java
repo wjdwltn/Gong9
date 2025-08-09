@@ -65,14 +65,14 @@ public class SolapiSmsService {
         try {
             List<SmsResponse> responses = solapiBulkSmsSender.sendBulkSms(messageList);
 
-//            for (SmsResponse response : responses) {
-//                if (!"4000".equals(response.statusCode())) {
-//                    log.error("문자 전송 실패 - 수신번호: {}, 상태코드: {}, 메시지: {}",
-//                            response.to(), response.statusCode(), response.statusMessage());
-//                } else {
-//                    log.info("문자 전송 성공 - 수신번호: {}", response.to());
-//                }
-//            }
+            for (SmsResponse response : responses) {
+                if (!"2000".equals(response.statusCode())) {
+                    log.error("문자 전송 실패 - 수신번호: {}, 상태코드: {}, 메시지: {}",
+                            response.to(), response.statusCode(), response.statusMessage());
+                } else {
+                    log.info("문자 전송 성공 - 수신번호: {}", response.to());
+                }
+            }
 
         } catch (IOException e) {
             log.error("Solapi 벌크 문자 전송 중 예외 발생", e);

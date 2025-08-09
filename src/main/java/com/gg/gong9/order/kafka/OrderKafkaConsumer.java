@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.gg.gong9.notification.sms.controller.dto.SmsMessage;
 import com.gg.gong9.notification.sms.kafka.SmsKafkaProducer;
 import com.gg.gong9.notification.sms.controller.SmsNotificationType;
+import com.gg.gong9.notification.sms.service.SmsNotificationService;
 import com.gg.gong9.order.controller.dto.OrderKafkaMessage;
 import com.gg.gong9.order.controller.dto.OrderWithCompletion;
 import com.gg.gong9.order.entity.Order;
@@ -28,6 +29,7 @@ public class OrderKafkaConsumer {
     private final OrderConcurrencyService orderConcurrencyService;
     private final SmsKafkaProducer smsKafkaProducer;
     private final OrderRedisStockService orderRedisStockService;
+    private final SmsNotificationService smsNotificationService;
 
     @KafkaListener(topics = "order-topic", groupId = "order-group", concurrency = "3")
     public void listenOrderTopic(String message ,Acknowledgment ack) throws JsonProcessingException {
@@ -39,12 +41,12 @@ public class OrderKafkaConsumer {
                     orderMessage.userId(), orderMessage.groupBuyId(), orderMessage.quantity());
 
             //주문 성공 메세지
-            sendOrderSuccessSms(result.order());
+            smsNotificationService.sendSms(result.order().getUser(),SmsNotificationType.ORDER_SUCCESS);
 
             //인원 모집 완료시 모든 주문자에게 공동구매 모집 완료 메세지(벌크처리)
             if(result.groupBuyCompleted()){
                 log.info("인원 모집 완료,{}", objectMapper.writeValueAsString(result.allUsers()));
-                sendGroupBuyCompleteSms(result.allUsers());
+                smsNotificationService.sendBulkSms(result.allUsers(),SmsNotificationType.GROUP_BUY_SUCCESS);
             }
 
             ack.acknowledge();
@@ -59,24 +61,6 @@ public class OrderKafkaConsumer {
             }
             throw e; // 예외 던져서 errorHandler가 처리
         }
-    }
-
-    private void sendOrderSuccessSms(Order order) {
-        User user = order.getUser();
-        SmsMessage smsMessage = new SmsMessage(user.getId(),user.getUsername(),user.getPhoneNumber(),SmsNotificationType.ORDER_SUCCESS);
-        smsKafkaProducer.sendSmsMessage(smsMessage);
-    }
-
-    private void sendGroupBuyCompleteSms(List<User> allUsers) {
-        if (allUsers == null || allUsers.isEmpty()) {
-            log.warn("마감 문자 발송 대상 없음");
-            return;
-        }
-        List<SmsMessage> bulkMessages = allUsers.stream()
-                .map(user -> new SmsMessage(user.getId(), user.getUsername(),user.getPhoneNumber(), SmsNotificationType.GROUP_BUY_SUCCESS))
-                .toList();
-
-        smsKafkaProducer.sendBulkMessages(bulkMessages);
     }
 
     private void rollbackRedisStock(OrderKafkaMessage orderMessage) {
