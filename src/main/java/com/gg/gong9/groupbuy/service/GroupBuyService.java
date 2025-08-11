@@ -1,7 +1,9 @@
 package com.gg.gong9.groupbuy.service;
 
 import com.gg.gong9.global.exception.exceptions.groupbuy.GroupBuyException;
+import com.gg.gong9.global.exception.exceptions.groupbuy.GroupBuyExceptionMessage;
 import com.gg.gong9.global.exception.exceptions.product.ProductException;
+import com.gg.gong9.global.exception.exceptions.product.ProductExceptionMessage;
 import com.gg.gong9.groupbuy.controller.command.GroupBuyUpdateCommand;
 import com.gg.gong9.groupbuy.controller.dto.*;
 import com.gg.gong9.groupbuy.entity.GroupBuy;
@@ -23,9 +25,6 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.stream.Collectors;
-
-import static com.gg.gong9.global.exception.exceptions.groupbuy.GroupBuyExceptionMessage.*;
-import static com.gg.gong9.global.exception.exceptions.product.ProductExceptionMessage.*;
 
 @Service
 @RequiredArgsConstructor
@@ -148,35 +147,35 @@ public class GroupBuyService {
 
     private void validateSeller(User user) {
         if (!user.getUserRole().equals(UserRole.ADMIN)) {
-            throw new GroupBuyException(ONLY_SELLER_CAN_REGISTER);
+            throw new GroupBuyException(GroupBuyExceptionMessage.ONLY_SELLER_CAN_REGISTER);
         }
     }
 
     private void validateOwner(GroupBuy groupBuy, User user) {
         if (!groupBuy.getUser().getId().equals(user.getId())) {
-            throw new GroupBuyException(NO_PERMISSION_GROUP_BUY);
+            throw new GroupBuyException(GroupBuyExceptionMessage.NO_PERMISSION_GROUP_BUY);
         }
     }
 
     private void validateNotEnded(GroupBuy groupBuy) {
         if (groupBuy.getStatus() == BuyStatus.COMPLETED || groupBuy.getStatus() == BuyStatus.CANCELED) {
-            throw new GroupBuyException(ALREADY_ENDED);
+            throw new GroupBuyException(GroupBuyExceptionMessage.ALREADY_ENDED);
         }
     }
 
     private GroupBuy getGroupBuyOrThrow(Long groupBuyId) {
         return groupBuyRepository.findById(groupBuyId)
-                .orElseThrow(() -> new GroupBuyException(NOT_FOUND_GROUP_BUY));
+                .orElseThrow(() -> new GroupBuyException(GroupBuyExceptionMessage.NOT_FOUND_GROUP_BUY));
     }
 
     private Product getProductOrThrow(Long productId) {
         return productRepository.findById(productId)
-                .orElseThrow(() -> new ProductException(PRODUCT_NOT_FOUND));
+                .orElseThrow(() -> new ProductException(ProductExceptionMessage.PRODUCT_NOT_FOUND));
     }
 
     private void validateProductOwner(Product product, User user) {
         if(!product.getUser().getId().equals(user.getId())) {
-            throw new ProductException(NO_PERMISSION_PRODUCT);
+            throw new ProductException(ProductExceptionMessage.NO_PERMISSION_PRODUCT);
         }
     }
 
