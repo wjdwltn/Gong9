@@ -123,16 +123,6 @@ public class OrderConcurrencyService {
         }
     }
 
-
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public GroupBuy createOrderTransaction(User user, OrderRequest request){
-        GroupBuy groupBuy = orderService.validateAndGetGroupBuy(request);
-        orderService.existsByUserAndGroupBuy(user, groupBuy);
-        groupBuy.decreaseRemainingQuantity(request.quantity());
-        gbRepository.save(groupBuy);
-        return groupBuy;
-    }
-
     public GroupBuy getGroupBuyWithLock(Long groupBuyId) {
         return gbRepository.findByIdWithPessimisticLock(groupBuyId)
                 .orElseThrow(() -> new GroupBuyException(NOT_FOUND_GROUP_BUY));
