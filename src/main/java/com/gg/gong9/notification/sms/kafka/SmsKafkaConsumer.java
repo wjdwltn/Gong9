@@ -21,7 +21,7 @@ public class SmsKafkaConsumer {
     private final ObjectMapper objectMapper;
     private final SmsService smsService;
 
-    @KafkaListener(topics = "sms-topic", groupId = "sms-group", concurrency = "3")
+    @KafkaListener(topics = "sms-topic", groupId = "sms-group", concurrency = "3",containerFactory = "kafkaListenerContainerFactory")
     public void listenSmsNotifyTopic(String message, Acknowledgment ack) throws JsonProcessingException {
         try {
             message = message.trim();

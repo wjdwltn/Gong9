@@ -38,8 +38,6 @@ public class KafkaConsumerConfig {
     @Value("${spring.kafka.consumer.auto-offset-reset}")
     private String earliest;
 
-    private final String groupId = "order-group";
-
     private final TaskExecutorConfig taskExecutorConfig;
 
     public KafkaConsumerConfig(TaskExecutorConfig taskExecutorConfig) {
@@ -51,7 +49,6 @@ public class KafkaConsumerConfig {
         Map<String, Object> props = new HashMap<>();
 
         props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
-        //props.put(ConsumerConfig.GROUP_ID_CONFIG, groupId);
         props.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, earliest);
         props.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, autoCommit);
         props.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
@@ -79,7 +76,7 @@ public class KafkaConsumerConfig {
         factory.setConsumerFactory(consumerFactory());
         factory.setConcurrency(3); // 파티션 병렬 처리
 
-        factory.getContainerProperties().setAckMode(ContainerProperties.AckMode.MANUAL_IMMEDIATE);
+        factory.getContainerProperties().setAckMode(ContainerProperties.AckMode.MANUAL);
 
         //ErrorHandler 설정
         factory.setCommonErrorHandler(errorHandler);
@@ -91,14 +88,16 @@ public class KafkaConsumerConfig {
     @Bean
     public DeadLetterPublishingRecoverer deadLetterPublishingRecoverer(KafkaTemplate<String, String> kafkaTemplate) {
         return new DeadLetterPublishingRecoverer(kafkaTemplate,
-                (record, ex) -> new TopicPartition(record.topic() + ".DLT", record.partition()));
-
+                (record, ex) -> {
+                    String dltTopic = record.topic() + ".DLT";
+                    log.info("DLT로 메시지 이동: topic={}, partition={}, offset={}, dltTopic={}",
+                            record.topic(), record.partition(), record.offset(), dltTopic);
+                    return new TopicPartition(dltTopic, record.partition());
+                });
     }
-
     @Bean
     public DefaultErrorHandler errorHandler(DeadLetterPublishingRecoverer deadLetterPublishingRecoverer) {
-        DefaultErrorHandler handler = new DefaultErrorHandler(deadLetterPublishingRecoverer, new FixedBackOff(1000L, 3));
-
+        DefaultErrorHandler handler = new DefaultErrorHandler(deadLetterPublishingRecoverer, new FixedBackOff(1000L, 1));
 
         // 💡 비즈니스 예외는 재시도 x
         handler.addNotRetryableExceptions(
@@ -106,10 +105,9 @@ public class KafkaConsumerConfig {
                 GroupBuyException.class,
                 IllegalStateException.class,
                 BaseException.class
+
         );
 
         return handler;
     }
-
-
 }

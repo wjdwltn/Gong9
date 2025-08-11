@@ -31,7 +31,7 @@ public class OrderKafkaConsumer {
     private final OrderRedisStockService orderRedisStockService;
     private final SmsNotificationService smsNotificationService;
 
-    @KafkaListener(topics = "order-topic", groupId = "order-group", concurrency = "3")
+    @KafkaListener(topics = "order-topic", groupId = "order-group", concurrency = "3",containerFactory = "kafkaListenerContainerFactory")
     public void listenOrderTopic(String message ,Acknowledgment ack) throws JsonProcessingException {
         OrderKafkaMessage orderMessage = null;
         try {
@@ -50,6 +50,7 @@ public class OrderKafkaConsumer {
             }
 
             ack.acknowledge();
+            log.info("오프셋 커밋 완료 - offset processed");
 
         } catch (Exception e) {
             log.error("주문 처리 실패, 메시지: {}, 에러: {}", message, e.toString(), e);
