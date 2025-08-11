@@ -35,8 +35,7 @@ public class OrderService {
     private final OrderRepository orderRepository;
     private final UserService userService;
     private final GroupBuyRepository groupBuyRepository;
-    private final SmsService smsService;
-    private final UserRepository userRepository;
+    private final OrderRedisStockService orderRedisStockService;
 
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
@@ -49,30 +48,6 @@ public class OrderService {
         existsByUserAndGroupBuy(user, groupBuy);
 
         groupBuy.decreaseRemainingQuantity(request.quantity());
-
-        return createAndSaveOrder(user, groupBuy, request.quantity());
-    }
-
-    //주문 생성
-    @Transactional
-    public Order createOrder(Long userId, OrderRequest request){
-
-        User user = userService.findByIdOrThrow(userId);
-
-        GroupBuy groupBuy = groupBuyRepository.findByIdWithPessimisticLock(request.groupBuyId())
-                .orElseThrow(() -> new GroupBuyException(NOT_FOUND_GROUP_BUY));
-
-        existsByUserAndGroupBuy(user, groupBuy);
-        groupBuy.decreaseRemainingQuantity(request.quantity());
-
-//        인원 확인 후 인원이 다 모이면 공구 모집 완료 메세지 구현
-//         남은 수량이 0이 되면 모집 완료 메시지
-        if (groupBuy.getRemainingQuantity() == 0) {
-            log.info("인원 모집이 완료되었습니다.");
-        }
-
-//        주문 성공 메세지
-       // smsService.sendByType(user, SmsNotificationType.ORDER_SUCCESS);
 
         return createAndSaveOrder(user, groupBuy, request.quantity());
     }
@@ -115,7 +90,12 @@ public class OrderService {
 
         order.cancel();
 
-        //추후 수량 감소 로직
+        GroupBuy groupBuy = order.getGroupBuy();
+        groupBuy.increaseRemainingQuantity(order.getQuantity());
+
+        //수량 복구
+        orderRedisStockService.increaseStockAndRemoveUserOrder(groupBuy.getId(), userId, order.getQuantity());
+
         //환불 등..
     }
 
@@ -157,7 +137,7 @@ public class OrderService {
     }
 
     public void existsByUserAndGroupBuy(User user, GroupBuy groupBuy){
-        if(orderRepository.existsByUserAndGroupBuy(user,groupBuy)){
+        if(orderRepository.existsByUserAndGroupBuyAndStatusNot(user,groupBuy,OrderStatus.CANCELLED)){
             throw new OrderException(OrderExceptionMessage.DUPLICATE_ORDER);
         }
     }
@@ -175,6 +155,6 @@ public class OrderService {
     }
 
     public List<User> findAllUsersByGroupBuy(Long groupBuyId){
-        return userRepository.findDistinctUsersByOrdersGroupBuyId(groupBuyId);
+        return orderRepository.findDistinctUsersByOrdersGroupBuyIdAndStatusNotCancelled(groupBuyId, OrderStatus.CANCELLED);
     }
 }

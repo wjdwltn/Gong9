@@ -1,5 +1,6 @@
 package com.gg.gong9.user.repository;
 
+import com.gg.gong9.order.entity.OrderStatus;
 import com.gg.gong9.user.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -19,7 +20,4 @@ public interface UserRepository extends JpaRepository<User, Long> {
     boolean existsByEmail(String email);
 
     Optional<User> findByIdAndIsDeletedFalse(Long id);
-
-    @Query("select distinct o.user from Order o where o.groupBuy.id = :groupBuyId and o.isDeleted = false")
-    List<User> findDistinctUsersByOrdersGroupBuyId(@Param("groupBuyId") Long groupBuyId);
 }

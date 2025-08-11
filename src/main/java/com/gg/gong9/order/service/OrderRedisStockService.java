@@ -57,8 +57,8 @@ public class OrderRedisStockService {
     }
 
     public boolean decreaseStockWithDuplicateCheck(Long groupBuyId, Long userId, int quantity) {
-        String stockKey = "groupBuy:" + groupBuyId + ":stock";
-        String userOrderKey = "groupBuy:" + groupBuyId + ":userOrders";
+        String stockKey = getStockKey(groupBuyId);
+        String userOrderKey = getUserOrderKey(groupBuyId);
 
         Long result = redisTemplate.execute(
                 stockDecreaseWithDuplicateCheckScript,
@@ -80,8 +80,8 @@ public class OrderRedisStockService {
 
     //재고 복구
     public void increaseStockAndRemoveUserOrder(Long groupBuyId, Long userId, int quantity) {
-        String stockKey = "groupBuy:" + groupBuyId + ":stock";
-        String userOrderKey = "groupBuy:" + groupBuyId + ":userOrders";
+        String stockKey = getStockKey(groupBuyId);
+        String userOrderKey = getUserOrderKey(groupBuyId);
 
         redisTemplate.execute(
                 restoreStockAndRemoveUserScript,
@@ -94,6 +94,14 @@ public class OrderRedisStockService {
     // 초기 세팅용
     public void initStock(Long groupBuyId, int stock) {
         redisTemplate.opsForValue().set("groupBuy:" + groupBuyId + ":stock", String.valueOf(stock));
+    }
+
+    private String getStockKey(Long groupBuyId) {
+        return "groupBuy:" + groupBuyId + ":stock";
+    }
+
+    private String getUserOrderKey(Long groupBuyId) {
+        return "groupBuy:" + groupBuyId + ":userOrders";
     }
 
 }

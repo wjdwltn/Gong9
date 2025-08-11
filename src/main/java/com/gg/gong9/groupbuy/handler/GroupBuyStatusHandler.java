@@ -25,19 +25,18 @@ public class GroupBuyStatusHandler {
 
     private final OrderRepository orderRepository;
     private final OrderService orderService;
-    private final SmsService smsService;
-    private final SmsKafkaProducer smsKafkaProducer;
     private final SmsNotificationService smsNotificationService;
 
     public void handleCancelled(GroupBuy groupBuy){
         if (groupBuy.getStatus() != BuyStatus.CANCELED) return;
+
+        List<User> allUsers = orderService.findAllUsersByGroupBuy(groupBuy.getId());
 
         orderRepository.updateStatusByGroupBuyId(OrderStatus.CANCELLED, groupBuy.getId());
 
         //추후 결제 환불
 
         //주문 취소 문자 카프카 배치 처리
-        List<User> allUsers = orderService.findAllUsersByGroupBuy(groupBuy.getId());
         smsNotificationService.sendBulkSms(allUsers,SmsNotificationType.GROUP_BUY_CANCELLED);
 
     }

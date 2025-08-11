@@ -121,6 +121,10 @@ public class GroupBuy extends BaseEntity {
         this.remainingQuantity -= amount;
     }
 
+    public void increaseRemainingQuantity(int amount){
+        this.remainingQuantity += amount;
+    }
+
     public void markAsCompleted(){
         this.status = BuyStatus.COMPLETED;
     }
