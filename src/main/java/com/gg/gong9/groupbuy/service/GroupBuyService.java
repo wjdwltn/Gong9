@@ -34,9 +34,8 @@ public class GroupBuyService {
 
     private final GroupBuyRepository groupBuyRepository;
     private final ProductRepository productRepository;
-    private final OrderRepository orderRepository;
-    private final SmsService smsService;
     private final GroupBuyStatusHandler groupBuyStatusHandler;
+    private final GroupBuyRedisService groupBuyRedisService;
 
     // 공구 등록
     @Transactional
@@ -48,6 +47,9 @@ public class GroupBuyService {
 
         GroupBuy groupBuy = GroupBuy.create(dto,product,user);
         groupBuyRepository.save(groupBuy);
+
+        groupBuyRedisService.initializeStockAndUserOrders(groupBuy.getId(),dto.totalQuantity());
+
         return groupBuy.getId();
     }
 
@@ -55,8 +57,11 @@ public class GroupBuyService {
     public GroupBuyDetailResponseDto getGroupBuyDetail(Long groupBuyId) {
         GroupBuy groupBuy = getGroupBuyOrThrow(groupBuyId);
 
-        int joinedQuantity = 0; // 주문 수량 합계 (구매 구현 후 추가예정 임시 0으로)
-        return GroupBuyDetailResponseDto.from(groupBuy, joinedQuantity);
+        //int buyerCount = groupBuyRedisService.getCurrentBuyerCount(groupBuyId); //총 주문 인원
+        int currentStock = groupBuyRedisService.getCurrentStock(groupBuyId); // 남은 재고
+        int joinedQuantity = groupBuy.getTotalQuantity() - currentStock; // 총 구매 수량
+
+        return GroupBuyDetailResponseDto.from(groupBuy, currentStock, joinedQuantity);
     }
 
     // 카테고리별 공구 목록 조회
@@ -64,7 +69,11 @@ public class GroupBuyService {
         List<GroupBuy> groupBuys = groupBuyRepository.findByProductCategory(category);
 
         return groupBuys.stream()
-                .map(groupBuy -> new GroupBuyCategoryListResponseDto(groupBuy,0))
+                .map(groupBuy -> {
+                    int currentStock = groupBuyRedisService.getCurrentStock(groupBuy.getId());
+                    int joinedQuantity = groupBuy.getTotalQuantity() - currentStock;
+                    return new GroupBuyCategoryListResponseDto(groupBuy, currentStock ,joinedQuantity);
+                })
                 .collect(Collectors.toList());
     }
 
@@ -73,7 +82,11 @@ public class GroupBuyService {
         List<GroupBuy> groupBuys = groupBuyRepository.findAllByStatusOrderByEndAtAsc(status);
 
         return groupBuys.stream()
-                .map(groupBuy->new GroupBuyUrgentListResponseDto(groupBuy, 0))
+                .map(groupBuy -> {
+                    int currentStock = groupBuyRedisService.getCurrentStock(groupBuy.getId());
+                    int joinedQuantity = groupBuy.getTotalQuantity() - currentStock;
+                    return new GroupBuyUrgentListResponseDto(groupBuy, currentStock ,joinedQuantity);
+                })
                 .collect(Collectors.toList());
     }
 
@@ -107,6 +120,8 @@ public class GroupBuyService {
         validateNotEnded(groupBuy);
 
         groupBuy.cancel();
+
+        groupBuyRedisService.deleteGroupBuyData(groupBuyId);
 
         //모집중일때만 환불 및 취소 메세지 보내기
         groupBuyStatusHandler.handleCancelled(groupBuy);
