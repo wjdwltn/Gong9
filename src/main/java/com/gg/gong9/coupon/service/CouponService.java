@@ -32,9 +32,8 @@ public class CouponService {
     @Transactional
     public Coupon createCoupon(CouponCreateRequestDto dto, User user) {
 
-        validateAdmin(user);
-
         validateUserExists(user.getId());
+        validateAdmin(user);
 
         validateStartBeforeEnd(dto.startAt(), dto.endAt());
 

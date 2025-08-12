@@ -13,10 +13,12 @@ import com.gg.gong9.user.entity.User;
 import com.gg.gong9.user.repository.UserRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class CouponIssueService {
@@ -25,7 +27,7 @@ public class CouponIssueService {
     private final UserRepository userRepository;
     private final CouponRepository couponRepository;
 
-    // 쿠폰 발급
+    //   쿠폰 발급 (동시성 제어 x )
     @Transactional
     public CouponIssue issueCoupon(Long couponId, User user) {
         validateUser(user.getId());
@@ -37,6 +39,9 @@ public class CouponIssueService {
         if(couponIssueRepository.existsByUserAndCoupon(user, coupon)) {
             throw new CouponException(CouponExceptionMessage.COUPON_ALREADY_ISSUED);
         }
+
+        coupon.decreaseRemainQuantity();
+
         CouponIssue issue = CouponIssue.create(user, coupon);
         return couponIssueRepository.save(issue);
     }

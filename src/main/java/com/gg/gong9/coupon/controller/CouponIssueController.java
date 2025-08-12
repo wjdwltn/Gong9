@@ -24,7 +24,7 @@ public class CouponIssueController {
     // 쿠폰 발급
     @PostMapping("/{couponId}/issue")
     public ResponseEntity<CouponIssueCreateResponseDto> issueCoupon(
-            @PathVariable Long couponId,
+            @PathVariable("couponId") Long couponId,
             @AuthenticationPrincipal CustomUserDetails userDetails
     ) {
         CouponIssue saved = couponIssueService.issueCoupon(couponId, userDetails.getUser());
