@@ -27,24 +27,51 @@ public class CouponIssueService {
     private final UserRepository userRepository;
     private final CouponRepository couponRepository;
 
-    //   쿠폰 발급 (동시성 제어 x )
+    //     쿠폰 발급 (동시성 제어 => 비관적 락)
     @Transactional
     public CouponIssue issueCoupon(Long couponId, User user) {
         validateUser(user.getId());
 
-        Coupon coupon = couponRepository.findById(couponId)
-                .orElseThrow(()-> new CouponException(CouponExceptionMessage.COUPON_NOT_FOUND));
+        try {
+            Coupon coupon = couponRepository.findByWithLock(couponId)
+                    .orElseThrow(() -> new CouponException(CouponExceptionMessage.COUPON_NOT_FOUND));
 
-        // 동시성 제어 도입 예정
-        if(couponIssueRepository.existsByUserAndCoupon(user, coupon)) {
-            throw new CouponException(CouponExceptionMessage.COUPON_ALREADY_ISSUED);
+            if (couponIssueRepository.existsByUserAndCoupon(user, coupon)) {
+                throw new CouponException(CouponExceptionMessage.COUPON_ALREADY_ISSUED);
+            }
+
+            if (coupon.getRemainQuantity() <= 0) {
+                throw new CouponException(CouponExceptionMessage.COUPON_SOLD_OUT);
+            }
+
+            coupon.decreaseRemainQuantity();
+
+            CouponIssue issue = CouponIssue.create(user, coupon);
+            return couponIssueRepository.save(issue);
+
+        } catch (jakarta.persistence.PessimisticLockException e) {
+            throw new CouponException(CouponExceptionMessage.LOCK_TIMEOUT);
         }
-
-        coupon.decreaseRemainQuantity();
-
-        CouponIssue issue = CouponIssue.create(user, coupon);
-        return couponIssueRepository.save(issue);
     }
+
+//    //   쿠폰 발급 (동시성 제어 x )
+//    @Transactional
+//    public CouponIssue issueCoupon(Long couponId, User user) {
+//        validateUser(user.getId());
+//
+//        Coupon coupon = couponRepository.findById(couponId)
+//                .orElseThrow(()-> new CouponException(CouponExceptionMessage.COUPON_NOT_FOUND));
+//
+//        // 동시성 제어 도입 예정
+//        if(couponIssueRepository.existsByUserAndCoupon(user, coupon)) {
+//            throw new CouponException(CouponExceptionMessage.COUPON_ALREADY_ISSUED);
+//        }
+//
+//        coupon.decreaseRemainQuantity();
+//
+//        CouponIssue issue = CouponIssue.create(user, coupon);
+//        return couponIssueRepository.save(issue);
+//    }
 
     // 발급 받은 쿠폰 목록 조회
     public List<CouponIssueListResponseDto> getIssuedCoupons(User user) {
