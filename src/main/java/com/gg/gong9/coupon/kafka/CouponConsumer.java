@@ -29,7 +29,6 @@ public class CouponConsumer {
     @KafkaListener(topics = "coupon-issued", groupId = "coupon-issue-group")
     @Transactional
     public void consumeCouponIssue(CouponIssuedEvent event) {
-        log.info(" 카프카 컨슈며 이벤트 수신 userId={}, couponId={}", event.userId(), event.couponId());
 
         User user = userRepository.findById(event.userId())
                 .orElseThrow(() -> new UserException(UserExceptionMessage
@@ -39,7 +38,6 @@ public class CouponConsumer {
                 .orElseThrow(() -> new CouponException(CouponExceptionMessage.COUPON_NOT_FOUND));
 
         if (couponIssueRepository.existsByUserAndCoupon(user, coupon)) {
-            log.info("카프카 컨슈머 이미 쿠폰 발급됨 userId={}, couponId={}", user.getId(), coupon.getId());
             return;
         }
 
