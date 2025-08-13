@@ -3,6 +3,7 @@ package com.gg.gong9.coupon.service;
 import com.gg.gong9.coupon.controller.dto.CouponIssueListResponseDto;
 import com.gg.gong9.coupon.entity.Coupon;
 import com.gg.gong9.coupon.entity.CouponIssue;
+import com.gg.gong9.coupon.entity.CouponIssueStatus;
 import com.gg.gong9.coupon.repository.CouponIssueRepository;
 import com.gg.gong9.coupon.repository.CouponRepository;
 import com.gg.gong9.global.exception.exceptions.coupon.CouponException;
@@ -81,4 +82,23 @@ public class CouponIssueService {
             throw new CouponException(CouponExceptionMessage.COUPON_NO_AUTHORITY);
         }
     }
+
+    @Transactional
+    public int expireCouponIssues(Long couponId) {
+        return couponIssueRepository.updateStatusToExpired(
+                couponId,
+                CouponIssueStatus.UNUSED,
+                CouponIssueStatus.EXPIRED
+        );
+    }
+
+    @Transactional
+    public int expireCouponIssuesBulk(List<Long> couponIds) {
+        return couponIssueRepository.updateStatusToExpiredBulk(
+                couponIds,
+                CouponIssueStatus.UNUSED,
+                CouponIssueStatus.EXPIRED
+        );
+    }
+
 }
