@@ -19,7 +19,7 @@ public enum CouponExceptionMessage {
     INVALID_END_TIME("종료 시간은 시작 시간보다 이후여야 합니다.", HttpStatus.BAD_REQUEST),
     COUPON_SOLD_OUT("쿠폰 재고가 모두 소진되었습니다.", HttpStatus.BAD_REQUEST),
     COUPON_LOCK_FAILED("쿠폰 발급을 위한 락을 획득하지 못했습니다.", HttpStatus.BAD_REQUEST),
-    LOCK_TIMEOUT("쿠폰 발급 대기 시간이 초과되었습니다.",HttpStatus.SERVICE_UNAVAILABLE);
+    COUPON_LOCK_TIMEOUT("쿠폰 발급 대기 시간이 초과되었습니다.",HttpStatus.SERVICE_UNAVAILABLE);
 
 
     private final String text;

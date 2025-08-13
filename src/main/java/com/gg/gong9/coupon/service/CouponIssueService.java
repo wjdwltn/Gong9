@@ -9,11 +9,13 @@ import com.gg.gong9.global.exception.exceptions.coupon.CouponException;
 import com.gg.gong9.global.exception.exceptions.coupon.CouponExceptionMessage;
 import com.gg.gong9.global.exception.exceptions.user.UserException;
 import com.gg.gong9.global.exception.exceptions.user.UserExceptionMessage;
+import com.gg.gong9.global.manager.RedissonLockManager;
 import com.gg.gong9.user.entity.User;
 import com.gg.gong9.user.repository.UserRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.redisson.api.RLock;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -26,33 +28,51 @@ public class CouponIssueService {
     private final CouponIssueRepository couponIssueRepository;
     private final UserRepository userRepository;
     private final CouponRepository couponRepository;
+    private final RedissonLockManager redissonLockManager;
+    private final CouponIssueTransactionalService couponIssueTransactionalService;
 
-    //     쿠폰 발급 (동시성 제어 => 비관적 락)
-    @Transactional
+
+    // Redisson 분산락 적용
     public CouponIssue issueCoupon(Long couponId, User user) {
-        validateUser(user.getId());
+        String lockKey = "couponLock:" + couponId;
+        RLock lock = redissonLockManager.lock(lockKey, 10, 3);
+
+        if (lock == null) throw new CouponException(CouponExceptionMessage.COUPON_LOCK_TIMEOUT);
 
         try {
-            Coupon coupon = couponRepository.findByWithLock(couponId)
-                    .orElseThrow(() -> new CouponException(CouponExceptionMessage.COUPON_NOT_FOUND));
-
-            if (couponIssueRepository.existsByUserAndCoupon(user, coupon)) {
-                throw new CouponException(CouponExceptionMessage.COUPON_ALREADY_ISSUED);
-            }
-
-            if (coupon.getRemainQuantity() <= 0) {
-                throw new CouponException(CouponExceptionMessage.COUPON_SOLD_OUT);
-            }
-
-            coupon.decreaseRemainQuantity();
-
-            CouponIssue issue = CouponIssue.create(user, coupon);
-            return couponIssueRepository.save(issue);
-
-        } catch (jakarta.persistence.PessimisticLockException e) {
-            throw new CouponException(CouponExceptionMessage.LOCK_TIMEOUT);
+            return couponIssueTransactionalService.issueCouponWithLock(couponId, user);
+        } finally {
+            redissonLockManager.unlock(lock);
         }
     }
+
+
+//    //     쿠폰 발급 (동시성 제어 => 비관적 락)
+//    @Transactional
+//    public CouponIssue issueCoupon(Long couponId, User user) {
+//        validateUser(user.getId());
+//
+//        try {
+//            Coupon coupon = couponRepository.findByWithLock(couponId)
+//                    .orElseThrow(() -> new CouponException(CouponExceptionMessage.COUPON_NOT_FOUND));
+//
+//            if (couponIssueRepository.existsByUserAndCoupon(user, coupon)) {
+//                throw new CouponException(CouponExceptionMessage.COUPON_ALREADY_ISSUED);
+//            }
+//
+//            if (coupon.getRemainQuantity() <= 0) {
+//                throw new CouponException(CouponExceptionMessage.COUPON_SOLD_OUT);
+//            }
+//
+//            coupon.decreaseRemainQuantity();
+//
+//            CouponIssue issue = CouponIssue.create(user, coupon);
+//            return couponIssueRepository.save(issue);
+//
+//        } catch (jakarta.persistence.PessimisticLockException e) {
+//            throw new CouponException(CouponExceptionMessage.COUPON_LOCK_TIMEOUT);
+//        }
+//    }
 
 //    //   쿠폰 발급 (동시성 제어 x )
 //    @Transactional
@@ -111,6 +131,17 @@ public class CouponIssueService {
     private void validateCouponOwner(CouponIssue couponIssue, Long userId) {
         if (!couponIssue.getUser().getId().equals(userId)) {
             throw new CouponException(CouponExceptionMessage.COUPON_NO_AUTHORITY);
+        }
+    }
+
+    private Coupon getCouponOrThrow(Long couponId) {
+        return couponRepository.findById(couponId)
+                .orElseThrow(() -> new CouponException(CouponExceptionMessage.COUPON_NOT_FOUND));
+    }
+
+    private void validateNotAlreadyIssued(User user, Coupon coupon) {
+        if (couponIssueRepository.existsByUserAndCoupon(user, coupon)) {
+            throw new CouponException(CouponExceptionMessage.COUPON_ALREADY_ISSUED);
         }
     }
 }
