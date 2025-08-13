@@ -37,6 +37,13 @@ public class CouponController {
         return ResponseEntity.ok(couponService.getCoupons(userDetails.getUser()));
     }
 
+    @GetMapping
+    public ResponseEntity<List<CouponListResponseDto>> getAvailableCoupons(
+            @AuthenticationPrincipal CustomUserDetails userDetails
+    ){
+        return ResponseEntity.ok(couponService.getAvailableCoupons(userDetails.getUser()));
+    }
+
     @PutMapping("/{couponId}")
     public ResponseEntity<CouponResponse> updateCoupon(
             @PathVariable Long couponId,

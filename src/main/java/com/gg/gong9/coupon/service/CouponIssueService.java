@@ -3,6 +3,8 @@ package com.gg.gong9.coupon.service;
 import com.gg.gong9.coupon.controller.dto.CouponIssueListResponseDto;
 import com.gg.gong9.coupon.entity.Coupon;
 import com.gg.gong9.coupon.entity.CouponIssue;
+import com.gg.gong9.coupon.entity.CouponIssueStatus;
+import com.gg.gong9.coupon.entity.CouponStatus;
 import com.gg.gong9.coupon.repository.CouponIssueRepository;
 import com.gg.gong9.coupon.repository.CouponRepository;
 import com.gg.gong9.global.exception.exceptions.coupon.CouponException;
@@ -80,5 +82,25 @@ public class CouponIssueService {
         if (!couponIssue.getUser().getId().equals(userId)) {
             throw new CouponException(CouponExceptionMessage.COUPON_NO_AUTHORITY);
         }
+    }
+
+    @Transactional
+    public int expireCouponIssues(Coupon coupon) {
+        int updatedCount = couponIssueRepository.updateStatusToExpired(coupon.getId(), CouponIssueStatus.EXPIRED);
+
+        if (coupon.getStatus() != CouponStatus.EXPIRED) {
+            coupon.markAsExpired();
+        }
+
+        return updatedCount;
+    }
+
+    @Transactional
+    public int expireCouponIssuesBulk(List<Long> couponIds) {
+        int updatedCount = couponIssueRepository.updateStatusToExpiredBulk(couponIds,CouponIssueStatus.EXPIRED);
+
+        couponRepository.updateStatusToExpiredBulk(couponIds,CouponStatus.EXPIRED);
+
+        return updatedCount;
     }
 }
