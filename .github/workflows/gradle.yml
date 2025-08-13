@@ -34,6 +34,7 @@ jobs:
       SOLAPI_API_KEY: ${{ secrets.SOLAPI_API_KEY }}
       SOLAPI_API_SECRET: ${{ secrets.SOLAPI_API_SECRET }}
       SOLAPI_SENDER_NUMBER: ${{ secrets.SOLAPI_SENDER_NUMBER }}
+      KAFKA_BOOTSTRAP_SERVERS: ${{ secrets.KAFKA_BOOTSTRAP_SERVERS }}
 
     runs-on: ubuntu-latest
     permissions:
