@@ -8,18 +8,20 @@ public record CouponListResponseDto(
         Long id,
         String name,
         int quantity,
-        int remainQuantity,
+        int currentQuantity,
+        int usedQuantity,
         int minOrderPrice,
         int discount,
         LocalDateTime startAt,
         LocalDateTime endAt
 ) {
-    public static CouponListResponseDto from(Coupon coupon) {
-        return new CouponListResponseDto(
+    public CouponListResponseDto(Coupon coupon, int currentStock, int usedQuantity) {
+        this(
                 coupon.getId(),
                 coupon.getName(),
                 coupon.getQuantity(),
-                coupon.getRemainQuantity(),
+                currentStock,
+                usedQuantity,
                 coupon.getMin_order_price(),
                 coupon.getDiscount(),
                 coupon.getStartAt(),

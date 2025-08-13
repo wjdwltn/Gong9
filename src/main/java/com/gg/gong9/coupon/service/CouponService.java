@@ -26,6 +26,7 @@ public class CouponService {
 
     private final CouponRepository couponRepository;
     private final UserRepository userRepository;
+    private final CouponRedisStockService couponRedisService;
 
 
     // 판매자 쿠폰 생성
@@ -47,14 +48,22 @@ public class CouponService {
                 dto.endAt(),
                 user
         );
+
+        couponRedisService.initializeStockAndUserOrders(coupon.getId(),dto.quantity());
+
         return couponRepository.save(coupon);
+
     }
 
     // 판매자 쿠폰 목록 조회
     @Transactional (Transactional.TxType.SUPPORTS)
     public List<CouponListResponseDto> getCoupons(User user) {
         return couponRepository.findByUserId(user.getId()).stream()
-                .map(CouponListResponseDto::from)
+                .map(coupon -> {
+                    int currentStock = couponRedisService.getCurrentStock(coupon.getId()); //현재 재고
+                    int usedQuantity = coupon.getQuantity() - currentStock; // 총 구매 수량
+                    return new CouponListResponseDto(coupon, currentStock, usedQuantity);
+                })
                 .toList();
     }
 
@@ -91,6 +100,8 @@ public class CouponService {
             throw new CouponException(CouponExceptionMessage.COUPON_DELETE_FORBIDDEN);
         }
         couponRepository.delete(coupon);
+
+        couponRedisService.deleteGroupBuyData(couponId);
     }
 
 
