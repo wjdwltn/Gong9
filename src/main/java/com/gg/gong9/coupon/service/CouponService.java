@@ -15,6 +15,7 @@ import com.gg.gong9.user.entity.UserRole;
 import com.gg.gong9.user.repository.UserRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -26,6 +27,7 @@ public class CouponService {
 
     private final CouponRepository couponRepository;
     private final UserRepository userRepository;
+    private final StringRedisTemplate redisTemplate;
 
 
     // 판매자 쿠폰 생성
@@ -46,7 +48,11 @@ public class CouponService {
                 dto.endAt(),
                 user
         );
-        return couponRepository.save(coupon);
+        Coupon savedCoupon = couponRepository.save(coupon);
+
+        initCouponStockInRedis(savedCoupon.getId(), dto.quantity());
+
+        return savedCoupon;
     }
 
     // 판매자 쿠폰 목록 조회
@@ -120,5 +126,10 @@ public class CouponService {
         if (endAt.isBefore(startAt)) {
             throw new CouponException(CouponExceptionMessage.INVALID_END_TIME);
         }
+    }
+
+    public void initCouponStockInRedis(Long couponId, int quantity) {
+        String countKey = "coupon:%d:quantity".formatted(couponId);
+        redisTemplate.opsForValue().set(countKey, String.valueOf(quantity));
     }
 }

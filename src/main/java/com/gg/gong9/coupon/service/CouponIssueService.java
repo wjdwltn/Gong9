@@ -28,23 +28,36 @@ public class CouponIssueService {
     private final CouponIssueRepository couponIssueRepository;
     private final UserRepository userRepository;
     private final CouponRepository couponRepository;
-    private final RedissonLockManager redissonLockManager;
-    private final CouponIssueTransactionalService couponIssueTransactionalService;
+//    private final RedissonLockManager redissonLockManager;
+//    private final CouponIssueTransactionalService couponIssueTransactionalService;
+    private final RedisCouponService redisCouponService;
 
-
-    // Redisson 분산락 적용
+    // lua 스크립트 적용
+    @Transactional
     public CouponIssue issueCoupon(Long couponId, User user) {
-        String lockKey = "couponLock:" + couponId;
-        RLock lock = redissonLockManager.lock(lockKey, 10, 3);
 
-        if (lock == null) throw new CouponException(CouponExceptionMessage.COUPON_LOCK_TIMEOUT);
+        redisCouponService.tryIssue(couponId, user);
 
-        try {
-            return couponIssueTransactionalService.issueCouponWithLock(couponId, user);
-        } finally {
-            redissonLockManager.unlock(lock);
-        }
+        Coupon coupon = getCouponOrThrow(couponId);
+
+        CouponIssue issue = CouponIssue.create(user, coupon);
+        return couponIssueRepository.save(issue);
     }
+
+
+//    // Redisson 분산락 적용
+//    public CouponIssue issueCoupon(Long couponId, User user) {
+//        String lockKey = "couponLock:" + couponId;
+//        RLock lock = redissonLockManager.lock(lockKey, 10, 3);
+//
+//        if (lock == null) throw new CouponException(CouponExceptionMessage.COUPON_LOCK_TIMEOUT);
+//
+//        try {
+//            return couponIssueTransactionalService.issueCouponWithLock(couponId, user);
+//        } finally {
+//            redissonLockManager.unlock(lock);
+//        }
+//    }
 
 
 //    //     쿠폰 발급 (동시성 제어 => 비관적 락)
