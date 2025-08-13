@@ -69,6 +69,7 @@ dependencies {
 
     implementation 'org.redisson:redisson-spring-boot-starter:3.30.0'
 
+    implementation 'org.springframework.kafka:spring-kafka'
 }
 
 test {

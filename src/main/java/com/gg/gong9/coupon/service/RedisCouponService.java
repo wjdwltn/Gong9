@@ -40,7 +40,7 @@ public class RedisCouponService {
     private static final String USER_KEY_PATTERN = "coupon:%d:user:%d";
     private static final String COUNT_KEY_PATTERN = "coupon:%d:quantity";
 
-    public void tryIssue(Long couponId, User user) {
+    public boolean tryIssue(Long couponId, User user) {
         String userKey = buildUserKey(couponId, user.getId());
         String countKey = buildCountKey(couponId);
 
@@ -54,7 +54,7 @@ public class RedisCouponService {
             throw new IllegalStateException("Redis 실행 실패");
         }
 
-        handleRedisResult(result.intValue());
+       return handleRedisResult(result.intValue());
     }
 
     private String buildUserKey(Long couponId, Long userId) {
@@ -65,18 +65,28 @@ public class RedisCouponService {
         return String.format(COUNT_KEY_PATTERN, couponId);
     }
 
-    private void handleRedisResult(int result) {
-        switch (result) {
-            case 1:
-                return;
-            case 0:
-                throw new CouponException(CouponExceptionMessage.COUPON_ALREADY_ISSUED);
-            case -1:
-                throw new CouponException(CouponExceptionMessage.COUPON_OUT_OF_STOCK);
-            default:
-                throw new IllegalStateException("예상치 못한 Redis 반환값: " + result);
+    private boolean handleRedisResult(int result) {
+        return switch (result) {
+            case 1 -> true;
+            case 0 -> throw new CouponException(CouponExceptionMessage.COUPON_ALREADY_ISSUED);
+            case -1 -> throw new CouponException(CouponExceptionMessage.COUPON_OUT_OF_STOCK);
+            default -> throw new IllegalStateException("예상치 못한 Redis 반환값: " + result);
+        };
+
+//        // 전 Lua 스크립트 (kafka적용 x) void 버전
+//        private void handleRedisResult ( int result){
+//            switch (result) {
+//                case 1:
+//                    return;
+//                case 0:
+//                    throw new CouponException(CouponExceptionMessage.COUPON_ALREADY_ISSUED);
+//                case -1:
+//                    throw new CouponException(CouponExceptionMessage.COUPON_OUT_OF_STOCK);
+//                default:
+//                    throw new IllegalStateException("예상치 못한 Redis 반환값: " + result);
+//            };
         }
     }
-}
+
 
 

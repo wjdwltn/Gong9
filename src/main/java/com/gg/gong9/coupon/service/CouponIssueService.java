@@ -1,8 +1,10 @@
 package com.gg.gong9.coupon.service;
 
 import com.gg.gong9.coupon.controller.dto.CouponIssueListResponseDto;
+import com.gg.gong9.coupon.controller.dto.CouponIssuedEvent;
 import com.gg.gong9.coupon.entity.Coupon;
 import com.gg.gong9.coupon.entity.CouponIssue;
+import com.gg.gong9.coupon.kafka.CouponProducer;
 import com.gg.gong9.coupon.repository.CouponIssueRepository;
 import com.gg.gong9.coupon.repository.CouponRepository;
 import com.gg.gong9.global.exception.exceptions.coupon.CouponException;
@@ -17,6 +19,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.redisson.api.RLock;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.util.List;
 
@@ -31,18 +35,36 @@ public class CouponIssueService {
 //    private final RedissonLockManager redissonLockManager;
 //    private final CouponIssueTransactionalService couponIssueTransactionalService;
     private final RedisCouponService redisCouponService;
+    private final CouponProducer couponProducer;
 
-    // lua 스크립트 적용
+    private final String topic = "coupon-issued";
+
+    // lua 스크립트에 kafka 적용해 (비동기 이벤트 기반)
     @Transactional
-    public CouponIssue issueCoupon(Long couponId, User user) {
-
+    public void issueCoupon(Long couponId, User user) {
         redisCouponService.tryIssue(couponId, user);
 
-        Coupon coupon = getCouponOrThrow(couponId);
-
-        CouponIssue issue = CouponIssue.create(user, coupon);
-        return couponIssueRepository.save(issue);
+        // 트랜잭션 커밋 후에 이벤트 발송
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCommit() {
+                CouponIssuedEvent event = new CouponIssuedEvent(user.getId(), couponId);
+                couponProducer.sendCouponIssuedEvent(event);
+            }
+        });
     }
+
+//    // lua 스크립트 적용
+//    @Transactional
+//    public CouponIssue issueCoupon(Long couponId, User user) {
+//
+//        redisCouponService.tryIssue(couponId, user);
+//
+//        Coupon coupon = getCouponOrThrow(couponId);
+//
+//        CouponIssue issue = CouponIssue.create(user, coupon);
+//        return couponIssueRepository.save(issue);
+//    }
 
 
 //    // Redisson 분산락 적용
