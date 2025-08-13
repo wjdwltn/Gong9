@@ -15,20 +15,19 @@ import java.util.List;
 public interface CouponIssueRepository extends JpaRepository<CouponIssue, Long> {
     boolean existsByUserAndCoupon(User user, Coupon coupon);
     List<CouponIssue> findByUser(User user);
+    List<CouponIssue> findByUserAndStatus(User user, CouponIssueStatus status);
     List<CouponIssue> findByStatusAndCoupon_EndAtBefore(CouponIssueStatus status, LocalDateTime now);
 
     @Modifying
-    @Query("UPDATE CouponIssue ci SET ci.status = :expired " +
-            "WHERE ci.coupon.id = :couponId AND ci.status = :unused")
+    @Query("UPDATE CouponIssue ci SET ci.status = :newStatus " +
+            "WHERE ci.coupon.id = :couponId AND ci.status = 'UNUSED'")
     int updateStatusToExpired(@Param("couponId") Long couponId,
-                              @Param("unused") CouponIssueStatus unused,
-                              @Param("expired") CouponIssueStatus expired);
+                              @Param("newStatus") CouponIssueStatus newStatus);
 
     @Modifying
     @Query("UPDATE CouponIssue ci SET ci.status = :newStatus " +
-            "WHERE ci.coupon.id IN :couponIds AND ci.status = :unused")
+            "WHERE ci.coupon.id IN :couponIds AND ci.status = 'UNUSED'")
     int updateStatusToExpiredBulk(@Param("couponIds") List<Long> couponIds,
-                                  @Param("unused") CouponIssueStatus unused,
-                                  @Param("expired") CouponIssueStatus expired);
+                                  @Param("newStatus") CouponIssueStatus newStatus);
 
 }

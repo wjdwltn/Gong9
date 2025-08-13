@@ -29,6 +29,9 @@ public class Coupon extends BaseEntity {
 
     private int min_order_price;
 
+    @Enumerated(EnumType.STRING)
+    private CouponStatus status;
+
     private LocalDateTime startAt;
     private LocalDateTime endAt;
 
@@ -37,13 +40,14 @@ public class Coupon extends BaseEntity {
     private User user;
 
 
-    public static Coupon create(String name, int quantity, int discount, int min_order_price,
+    public static Coupon create(String name, int quantity, int discount, int min_order_price, CouponStatus status,
                                 LocalDateTime startAt, LocalDateTime endAt, User user) {
         Coupon coupon = new Coupon();
         coupon.name = name;
         coupon.quantity = quantity;
         coupon.discount = discount;
         coupon.min_order_price = min_order_price;
+        coupon.status = status;
         coupon.startAt = startAt;
         coupon.endAt = endAt;
         coupon.user = user;
@@ -61,6 +65,10 @@ public class Coupon extends BaseEntity {
 
     public boolean editable() {
         return LocalDateTime.now().isBefore(this.startAt);
+    }
+
+    public void markAsExpired() {
+        this.status = CouponStatus.EXPIRED;
     }
 
 }

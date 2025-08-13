@@ -3,6 +3,7 @@ package com.gg.gong9.coupon.scheduler;
 import com.gg.gong9.coupon.entity.Coupon;
 import com.gg.gong9.coupon.entity.CouponIssue;
 import com.gg.gong9.coupon.entity.CouponIssueStatus;
+import com.gg.gong9.coupon.entity.CouponStatus;
 import com.gg.gong9.coupon.repository.CouponIssueRepository;
 import com.gg.gong9.coupon.repository.CouponRepository;
 import com.gg.gong9.coupon.service.CouponIssueService;
@@ -37,13 +38,13 @@ public class CouponExpiryScheduler {
 
     @Scheduled(cron = "0 0 * * * *")
     public void expireCoupons() {
-        List<Coupon> expiredCoupons = couponRepository.findByEndAtBefore(LocalDateTime.now());
+        List<Coupon> expiredCoupons = couponRepository.findByStatusAndEndAtBefore(CouponStatus.ACTIVE,LocalDateTime.now());
 
         for(Coupon coupon : expiredCoupons){
             Long couponId = coupon.getId();
 
             try{
-                int updateCount = couponIssueService.expireCouponIssues(couponId);
+                int updateCount = couponIssueService.expireCouponIssues(coupon);
 
                 if (updateCount > 0) {
                     log.info("[쿠폰 만료 처리] couponId={}, 만료된 발급 수={}", couponId, updateCount);
@@ -61,7 +62,7 @@ public class CouponExpiryScheduler {
     public void expireCoupons_update() {
         LocalDateTime now = LocalDateTime.now();
 
-        List<Coupon> expiredCoupons = couponRepository.findByEndAtBefore(now);
+        List<Coupon> expiredCoupons = couponRepository.findByStatusAndEndAtBefore(CouponStatus.ACTIVE,LocalDateTime.now());
 
         if (expiredCoupons.isEmpty()) {
             log.info("[쿠폰 만료 처리] 마감된 쿠폰 없음");

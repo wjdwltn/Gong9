@@ -10,18 +10,20 @@ public record CouponListResponseDto(
         int quantity,
         int currentQuantity,
         int usedQuantity,
+        boolean alreadyIssued,
         int minOrderPrice,
         int discount,
         LocalDateTime startAt,
         LocalDateTime endAt
 ) {
-    public CouponListResponseDto(Coupon coupon, int currentStock, int usedQuantity) {
+    public CouponListResponseDto(Coupon coupon, int currentStock, int usedQuantity, boolean alreadyIssued) {
         this(
                 coupon.getId(),
                 coupon.getName(),
                 coupon.getQuantity(),
                 currentStock,
                 usedQuantity,
+                alreadyIssued,
                 coupon.getMin_order_price(),
                 coupon.getDiscount(),
                 coupon.getStartAt(),
