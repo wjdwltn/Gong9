@@ -7,12 +7,9 @@ import com.gg.gong9.global.exception.exceptions.product.ProductExceptionMessage;
 import com.gg.gong9.groupbuy.controller.command.GroupBuyUpdateCommand;
 import com.gg.gong9.groupbuy.controller.dto.*;
 import com.gg.gong9.groupbuy.entity.GroupBuy;
-import com.gg.gong9.groupbuy.handler.GroupBuyStatusHandler;
 import com.gg.gong9.global.enums.BuyStatus;
 import com.gg.gong9.groupbuy.repository.GroupBuyRepository;
 import com.gg.gong9.groupbuy.controller.dto.GroupBuyListResponseDto;
-import com.gg.gong9.notification.sms.service.SmsService;
-import com.gg.gong9.order.repository.OrderRepository;
 import com.gg.gong9.global.enums.Category;
 import com.gg.gong9.product.entity.Product;
 import com.gg.gong9.product.repository.ProductRepository;
@@ -21,6 +18,7 @@ import com.gg.gong9.user.entity.UserRole;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -33,8 +31,8 @@ public class GroupBuyService {
 
     private final GroupBuyRepository groupBuyRepository;
     private final ProductRepository productRepository;
-    private final GroupBuyStatusHandler groupBuyStatusHandler;
     private final GroupBuyRedisService groupBuyRedisService;
+    private final ApplicationEventPublisher eventPublisher;
 
     // 공구 등록
     @Transactional
@@ -122,8 +120,8 @@ public class GroupBuyService {
 
         groupBuyRedisService.deleteGroupBuyData(groupBuyId);
 
-        //모집중일때만 환불 및 취소 메세지 보내기
-        groupBuyStatusHandler.handleCancelled(groupBuy);
+        // 트랜잭션 커밋 후 후처리 이벤트
+        eventPublisher.publishEvent(new GroupBuyCancelledEvent(groupBuy.getId()));
     }
 
 
