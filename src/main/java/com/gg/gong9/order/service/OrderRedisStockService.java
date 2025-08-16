@@ -34,10 +34,10 @@ public class OrderRedisStockService {
                 return -1
             end
 
-            redis.call('decrby', stockKey, decrement)
+            local newStock = redis.call('decrby', stockKey, decrement)
             redis.call('sadd', userOrderKey, userId)
-
-            return stock - decrement
+            
+            return newStock
             """;
 
         this.stockDecreaseWithDuplicateCheckScript = new DefaultRedisScript<>();
@@ -46,10 +46,21 @@ public class OrderRedisStockService {
 
         // 재고 복구 + 중복주문 제거
         String restoreLuaScript = """
-            redis.call('INCRBY', KEYS[1], ARGV[1])
-            redis.call('SREM', KEYS[2], ARGV[2])
+            local stockKey = KEYS[1]
+            local userOrderKey = KEYS[2]
+            local quantity = tonumber(ARGV[1]) or 0
+            local userId = ARGV[2]
+        
+            -- 이미 주문 기록이 없는 경우 롤백 안 함
+            if redis.call('sismember', userOrderKey, userId) == 0 then
+                return 0
+            end
+        
+            redis.call('INCRBY', stockKey, quantity)
+            redis.call('SREM', userOrderKey, userId)
+        
             return 1
-            """;
+        """;
 
         this.restoreStockAndRemoveUserScript = new DefaultRedisScript<>();
         this.restoreStockAndRemoveUserScript.setScriptText(restoreLuaScript);
