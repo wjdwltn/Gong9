@@ -110,6 +110,16 @@ public class OrderService {
         order.softDelete();
     }
 
+
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void updateOrdersStatusBulk(Long groupBuyId) {
+        orderRepository.updateStatusByGroupBuyId(
+                OrderStatus.CANCELLED,
+                groupBuyId,
+                OrderStatus.PAYMENT_COMPLETED
+        );
+    }
+
     //검즘
 
     public GroupBuy validateAndGetGroupBuy(OrderRequest request) {
