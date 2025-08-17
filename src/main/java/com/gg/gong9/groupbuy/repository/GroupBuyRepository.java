@@ -16,7 +16,7 @@ import java.util.Optional;
 
 public interface GroupBuyRepository extends JpaRepository <GroupBuy, Long> {
     List<GroupBuy> findByUserId(Long userId);
-    List<GroupBuy> findByProductCategory(Category category);
+    List<GroupBuy> findByProductCategoryAndStatus(Category category, BuyStatus status);
     List<GroupBuy> findAllByStatusOrderByEndAtAsc(BuyStatus status);
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)

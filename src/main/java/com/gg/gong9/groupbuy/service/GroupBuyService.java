@@ -68,7 +68,7 @@ public class GroupBuyService {
 
     // 카테고리별 공구 목록 조회
     public List<GroupBuyCategoryListResponseDto> getGroupBuyCategoryList(Category category){
-        List<GroupBuy> groupBuys = groupBuyRepository.findByProductCategory(category);
+        List<GroupBuy> groupBuys = groupBuyRepository.findByProductCategoryAndStatus(category,BuyStatus.RECRUITING);
 
         return groupBuys.stream()
                 .map(groupBuy -> {
