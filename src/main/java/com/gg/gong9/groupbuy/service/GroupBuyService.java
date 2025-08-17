@@ -24,6 +24,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 
+import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -75,7 +76,7 @@ public class GroupBuyService {
                     int joinedQuantity = groupBuy.getTotalQuantity() - currentStock;
                     return new GroupBuyCategoryListResponseDto(groupBuy, currentStock ,joinedQuantity);
                 })
-                .collect(Collectors.toList());
+                .toList();
     }
 
     // 마감 임박 공구 목록 조회
@@ -88,7 +89,9 @@ public class GroupBuyService {
                     int joinedQuantity = groupBuy.getTotalQuantity() - currentStock;
                     return new GroupBuyUrgentListResponseDto(groupBuy, currentStock ,joinedQuantity);
                 })
-                .collect(Collectors.toList());
+                .sorted(Comparator.comparing(GroupBuyUrgentListResponseDto::endAt)
+                        .thenComparing(GroupBuyUrgentListResponseDto::currentStock))
+                .toList();
     }
 
     // 공구 정보 수정
@@ -137,7 +140,7 @@ public class GroupBuyService {
                     int joinedQuantity = groupBuy.getTotalQuantity() - currentStock;
                     return new GroupBuyListResponseDto(groupBuy, currentStock ,joinedQuantity);
                 })
-                .collect(Collectors.toList());
+                .toList();
     }
 
     // 내가 등록한 공구 상세 조회(판매자) -> 판매 데이터 통계 : 주문자 목록, 판매 금액, 건수
