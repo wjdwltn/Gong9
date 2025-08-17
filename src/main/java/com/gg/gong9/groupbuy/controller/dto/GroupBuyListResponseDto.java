@@ -14,9 +14,10 @@ public record GroupBuyListResponseDto (
         LocalDateTime endAt,
         int totalQuantity,
         int limitQuantity,
+        int currentStock,
         int joinedQuantity
 ) {
-    public GroupBuyListResponseDto(GroupBuy groupBuy, int joinedQuantity){
+    public GroupBuyListResponseDto(GroupBuy groupBuy, int currentStock, int joinedQuantity){
         this(
                 groupBuy.getId(),
                 groupBuy.getProduct().getProductName(),
@@ -26,6 +27,7 @@ public record GroupBuyListResponseDto (
                 groupBuy.getEndAt(),
                 groupBuy.getTotalQuantity(),
                 groupBuy.getLimitQuantity(),
+                currentStock,
                 joinedQuantity
         );
     }
