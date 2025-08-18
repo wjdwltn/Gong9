@@ -53,7 +53,6 @@ public class MiniBuyService{
     // 소량공구 상세조회
     public MiniBuyDetailResponseDto getMiniBuyDetail(Long miniBuyId) {
         MiniBuy miniBuy = getMiniBuyOrThrow(miniBuyId);
-        int joinedCount = 0;
         return MiniBuyDetailResponseDto.from(miniBuy);
     }
 
@@ -62,7 +61,7 @@ public class MiniBuyService{
         List<MiniBuy> miniBuys = miniBuyRepository.findByCategory(category);
 
         return miniBuys.stream()
-                .map(miniBuy -> MiniBuyCategoryResponseDto.from(miniBuy, 0))
+                .map(MiniBuyCategoryResponseDto::from)
                 .collect(Collectors.toList());
     }
 
@@ -71,7 +70,7 @@ public class MiniBuyService{
         List<MiniBuy> miniBuys = miniBuyRepository.findAllByStatusOrderByEndAtAsc(status);
 
         return miniBuys.stream()
-                .map(miniBuy -> MiniBuyUrgentListResponseDto.from(miniBuy, 0))
+                .map(MiniBuyUrgentListResponseDto::from)
                 .collect(Collectors.toList());
     }
 
@@ -107,7 +106,7 @@ public class MiniBuyService{
     // 내가 등록한 소량공구 목록 조회
     public List<MiniBuyListResponseDto> getMiniBuyList(User user) {
         return miniBuyRepository.findByUserId(user.getId()).stream()
-                .map(miniBuy -> MiniBuyListResponseDto.from(miniBuy,0))
+                .map(MiniBuyListResponseDto::from)
                 .collect(Collectors.toList());
     }
 

@@ -132,5 +132,9 @@ public class MiniBuy extends BaseEntity {
         return this.status == BuyStatus.RECRUITING;
     }
 
+    public int getJoinedCount() {
+        return targetCount - remainCount;
+    }
+
 
 }

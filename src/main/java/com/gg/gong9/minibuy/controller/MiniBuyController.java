@@ -37,14 +37,14 @@ public class MiniBuyController {
 
     @GetMapping("/{miniBuyId}")
     public ResponseEntity<MiniBuyDetailResponseDto> getMiniBuyDetail(
-            @PathVariable Long miniBuyId){
+            @PathVariable("miniBuyId") Long miniBuyId){
         MiniBuyDetailResponseDto response = miniBuyService.getMiniBuyDetail(miniBuyId);
         return ResponseEntity.ok(response);
     }
 
     @GetMapping("/category/{category}")
     public ResponseEntity<List<MiniBuyCategoryResponseDto>> getMiniBuyCategory(
-            @PathVariable Category category
+            @PathVariable("category") Category category
     ){
         List<MiniBuyCategoryResponseDto> response = miniBuyService.getMiniBuyCategoryList(category);
         return ResponseEntity.ok(response);
@@ -58,7 +58,7 @@ public class MiniBuyController {
 
     @PutMapping("/{miniBuyId}")
     public ResponseEntity<MiniBuyResponse> updateMiniBuy(
-            @PathVariable Long miniBuyId,
+            @PathVariable("miniBuyId") Long miniBuyId,
             @Valid @RequestPart("requestDto") MiniBuyUpdateRequestDto requestDto,
             @RequestPart(value = "file") MultipartFile file,
             @AuthenticationPrincipal CustomUserDetails userDetails
@@ -86,7 +86,7 @@ public class MiniBuyController {
 
     @DeleteMapping("/{miniBuyId}")
     public ResponseEntity<MiniBuyResponse> deleteMiniBuy(
-            @PathVariable Long miniBuyId,
+            @PathVariable("miniBuyId") Long miniBuyId,
             @AuthenticationPrincipal CustomUserDetails userDetails
     ){
         miniBuyService.deleteMiniBuy(miniBuyId, userDetails.getUser());

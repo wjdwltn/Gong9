@@ -13,6 +13,7 @@ public record MiniBuyDetailResponseDto (
         int price,
         Category category,
         int targetCount,
+        int joinedCount,
         LocalDateTime startAt,
         LocalDateTime endAt
 ){
@@ -25,9 +26,9 @@ public record MiniBuyDetailResponseDto (
                 miniBuy.getPrice(),
                 miniBuy.getCategory(),
                 miniBuy.getTargetCount(),
+                miniBuy.getJoinedCount(),
                 miniBuy.getStartAt(),
                 miniBuy.getEndAt()
         );
     }
 }
-
