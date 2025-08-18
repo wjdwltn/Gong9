@@ -13,6 +13,7 @@ public enum CouponExceptionMessage {
     COUPON_EXPIRED("쿠폰이 만료되었습니다.", HttpStatus.BAD_REQUEST),
     COUPON_INVALID_STATUS("사용할 수 없는 쿠폰입니다.", HttpStatus.BAD_REQUEST),
     COUPON_NO_AUTHORITY("해당 쿠폰에 대한 권한이 없습니다.", HttpStatus.FORBIDDEN),
+    COUPON_GROUP_BUY_MISMATCH("쿠폰을 해당 공동구매에서 사용할 수 없습니다.",HttpStatus.BAD_REQUEST),
 
     COUPON_ALREADY_STARTED("이벤트 시작 이후 쿠폰은 수정이 불가능합니다.", HttpStatus.BAD_REQUEST),
     COUPON_DELETE_FORBIDDEN("이벤트 시작 이후 쿠폰은 쿠폰은 삭제가 불가능합니다.", HttpStatus.BAD_REQUEST),

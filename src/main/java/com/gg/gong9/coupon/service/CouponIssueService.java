@@ -11,6 +11,8 @@ import com.gg.gong9.global.exception.exceptions.coupon.CouponException;
 import com.gg.gong9.global.exception.exceptions.coupon.CouponExceptionMessage;
 import com.gg.gong9.global.exception.exceptions.user.UserException;
 import com.gg.gong9.global.exception.exceptions.user.UserExceptionMessage;
+import com.gg.gong9.groupbuy.entity.GroupBuy;
+import com.gg.gong9.groupbuy.service.GroupBuyService;
 import com.gg.gong9.user.entity.User;
 import com.gg.gong9.user.repository.UserRepository;
 import jakarta.transaction.Transactional;
@@ -26,6 +28,7 @@ public class CouponIssueService {
     private final CouponIssueRepository couponIssueRepository;
     private final UserRepository userRepository;
     private final CouponRepository couponRepository;
+    private final GroupBuyService groupBuyService;
 
     // 쿠폰 발급
     @Transactional
@@ -56,11 +59,14 @@ public class CouponIssueService {
 
     // 쿠폰 사용 완료처리 (결제 후 완료로..) UNUSED → USED
     @Transactional
-    public void useCoupon(Long couponId, User user) {
-
+    public void useCoupon(Long couponId, User user, Long groupBuyId) {
         CouponIssue couponIssue = getCouponIssue(couponId);
 
         validateCouponOwner(couponIssue, user.getId());
+
+        GroupBuy groupBuy = groupBuyService.getGroupBuyOrThrow(groupBuyId);
+
+        validateCouponGroupBuy(couponIssue, groupBuy);
 
         couponIssue.validateUsable(); //(스케줄러 지연 보완)
         couponIssue.markAsUsed();
@@ -81,6 +87,12 @@ public class CouponIssueService {
     private void validateCouponOwner(CouponIssue couponIssue, Long userId) {
         if (!couponIssue.getUser().getId().equals(userId)) {
             throw new CouponException(CouponExceptionMessage.COUPON_NO_AUTHORITY);
+        }
+    }
+
+    private void validateCouponGroupBuy(CouponIssue couponIssue, GroupBuy orderGroupBuy) {
+        if(!couponIssue.getCoupon().getGroupBuy().getId().equals(orderGroupBuy.getId())){
+            throw new CouponException(CouponExceptionMessage.COUPON_GROUP_BUY_MISMATCH);
         }
     }
 

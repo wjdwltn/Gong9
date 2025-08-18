@@ -14,7 +14,9 @@ public record CouponListResponseDto(
         int minOrderPrice,
         int discount,
         LocalDateTime startAt,
-        LocalDateTime endAt
+        LocalDateTime endAt,
+        Long groupBuyId,
+        String groupBuyName
 ) {
     public CouponListResponseDto(Coupon coupon, int currentStock, int usedQuantity, boolean alreadyIssued) {
         this(
@@ -27,7 +29,9 @@ public record CouponListResponseDto(
                 coupon.getMin_order_price(),
                 coupon.getDiscount(),
                 coupon.getStartAt(),
-                coupon.getEndAt()
+                coupon.getEndAt(),
+                coupon.getGroupBuy().getId(),
+                coupon.getGroupBuy().getProduct().getProductName()
         );
     }
 }

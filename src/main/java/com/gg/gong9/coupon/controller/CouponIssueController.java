@@ -46,9 +46,10 @@ public class CouponIssueController {
     @PutMapping("/{couponIssueId}/used")
     public ResponseEntity<CouponIssueResponse> usedCoupon(
             @PathVariable Long couponIssueId,
+            @RequestParam Long groupBuyId,
             @AuthenticationPrincipal CustomUserDetails userDetails
     ){
-        couponIssueService.useCoupon(couponIssueId, userDetails.getUser());
+        couponIssueService.useCoupon(couponIssueId, userDetails.getUser(), groupBuyId);
         return ResponseEntity.ok(new CouponIssueResponse("쿠폰 사용이 정상적으로 처리되었습니다."));
     }
 

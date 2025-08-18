@@ -13,6 +13,8 @@ public record CouponIssueListResponseDto(
         int discount,
         LocalDateTime starAt,
         LocalDateTime endAt,
+        Long groupBuyId,
+        String groupBuyName,
         String status
 ) {
     public static CouponIssueListResponseDto from(CouponIssue couponIssue) {
@@ -25,6 +27,8 @@ public record CouponIssueListResponseDto(
                 couponIssue.getCoupon().getDiscount(),
                 couponIssue.getCoupon().getStartAt(),
                 couponIssue.getCoupon().getEndAt(),
+                couponIssue.getCoupon().getGroupBuy().getId(),
+                couponIssue.getCoupon().getGroupBuy().getProduct().getProductName(),
                 couponIssue.getStatus().toString()
         );
     }

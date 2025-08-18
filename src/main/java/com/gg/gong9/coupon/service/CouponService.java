@@ -14,6 +14,8 @@ import com.gg.gong9.global.exception.exceptions.coupon.CouponExceptionMessage;
 import com.gg.gong9.global.exception.exceptions.user.UserException;
 import com.gg.gong9.global.exception.exceptions.user.UserExceptionMessage;
 
+import com.gg.gong9.groupbuy.entity.GroupBuy;
+import com.gg.gong9.groupbuy.service.GroupBuyService;
 import com.gg.gong9.user.entity.User;
 import com.gg.gong9.user.entity.UserRole;
 import com.gg.gong9.user.repository.UserRepository;
@@ -34,6 +36,7 @@ public class CouponService {
     private final UserRepository userRepository;
     private final CouponIssueRepository couponIssueRepository;
     private final CouponRedisStockService couponRedisService;
+    private final GroupBuyService groupBuyService;
 
 
     // 판매자 쿠폰 생성
@@ -46,6 +49,8 @@ public class CouponService {
 
         validateStartBeforeEnd(dto.startAt(), dto.endAt());
 
+        GroupBuy groupBuy = groupBuyService.getGroupBuyOrThrow(dto.groupBuyId());
+
         Coupon coupon = Coupon.create(
                 dto.name(),
                 dto.quantity(),
@@ -54,7 +59,8 @@ public class CouponService {
                 CouponStatus.ACTIVE,
                 dto.startAt(),
                 dto.endAt(),
-                user
+                user,
+                groupBuy
         );
 
         couponRedisService.initializeStockAndUserOrders(coupon.getId(),dto.quantity());

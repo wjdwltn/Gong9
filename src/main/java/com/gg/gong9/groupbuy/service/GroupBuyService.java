@@ -163,7 +163,7 @@ public class GroupBuyService {
         }
     }
 
-    private GroupBuy getGroupBuyOrThrow(Long groupBuyId) {
+    public GroupBuy getGroupBuyOrThrow(Long groupBuyId) {
         return groupBuyRepository.findById(groupBuyId)
                 .orElseThrow(() -> new GroupBuyException(GroupBuyExceptionMessage.NOT_FOUND_GROUP_BUY));
     }

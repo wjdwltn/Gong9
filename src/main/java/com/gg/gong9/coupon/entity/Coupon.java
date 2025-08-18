@@ -1,6 +1,7 @@
 package com.gg.gong9.coupon.entity;
 
 import com.gg.gong9.global.base.BaseEntity;
+import com.gg.gong9.groupbuy.entity.GroupBuy;
 import com.gg.gong9.user.entity.User;
 import jakarta.persistence.*;
 import lombok.Getter;
@@ -39,9 +40,13 @@ public class Coupon extends BaseEntity {
     @JoinColumn(name = "user_id")
     private User user;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "group_buy_id")
+    private GroupBuy groupBuy;
+
 
     public static Coupon create(String name, int quantity, int discount, int min_order_price, CouponStatus status,
-                                LocalDateTime startAt, LocalDateTime endAt, User user) {
+                                LocalDateTime startAt, LocalDateTime endAt, User user, GroupBuy groupBuy) {
         Coupon coupon = new Coupon();
         coupon.name = name;
         coupon.quantity = quantity;
@@ -51,6 +56,7 @@ public class Coupon extends BaseEntity {
         coupon.startAt = startAt;
         coupon.endAt = endAt;
         coupon.user = user;
+        coupon.groupBuy = groupBuy;
         return coupon;
     }
 

@@ -25,7 +25,7 @@ public class OrderKafkaProducer {
 
     public void sendOrderMessage(Long userId, OrderRequest request) {
         try {
-            OrderKafkaMessage message = new OrderKafkaMessage(userId, request.groupBuyId(), request.quantity());
+            OrderKafkaMessage message = new OrderKafkaMessage(userId, request.groupBuyId(), request.quantity(), request.couponIssueId());
             String json = objectMapper.writeValueAsString(message);
             CompletableFuture<SendResult<String, String>> future =
                     kafkaTemplate.send(topic, String.valueOf(request.groupBuyId()), json);

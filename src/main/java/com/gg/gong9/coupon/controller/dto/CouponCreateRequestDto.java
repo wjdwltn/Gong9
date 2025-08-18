@@ -26,6 +26,9 @@ public record CouponCreateRequestDto (
         LocalDateTime startAt,
 
         @NotNull(message = "종료 시간은 필수입니다.")
-        LocalDateTime endAt
+        LocalDateTime endAt,
+
+        @NotNull(message = "공동구매 선택은 필수입니다.")
+        Long groupBuyId
 ) {
 }
