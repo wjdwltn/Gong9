@@ -20,9 +20,10 @@ public record GroupBuyDetailResponseDto(
         LocalDateTime endAt,
         int totalQuantity,
         int limitQuantity,
+        int currentStock,
         int joinedQuantity
 ){
-    public static GroupBuyDetailResponseDto from(GroupBuy groupBuy, int joinedQuantity){
+    public static GroupBuyDetailResponseDto from(GroupBuy groupBuy,int currentStock, int joinedQuantity){
         Product product = groupBuy.getProduct();
 
         List<String> imageUrls = extractImageUrls(product);
@@ -38,6 +39,7 @@ public record GroupBuyDetailResponseDto(
                 groupBuy.getEndAt(),
                 groupBuy.getTotalQuantity(),
                 groupBuy.getLimitQuantity(),
+                currentStock,
                 joinedQuantity
         );
     }
