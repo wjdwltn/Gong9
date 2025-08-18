@@ -136,5 +136,21 @@ public class MiniBuy extends BaseEntity {
         return targetCount - remainCount;
     }
 
+    public void changeStatus(BuyStatus newStatus) {
+        switch (newStatus) {
+            case RECRUITING -> this.status = BuyStatus.RECRUITING;
+            case CANCELED -> this.status = BuyStatus.CANCELED;
+        }
+    }
+
+    // 상태 자동 변경
+    public void updateStatusIfNeeded(LocalDateTime now) {
+        if (status == BuyStatus.BEFORE_START && startAt != null && now.isAfter(startAt)) {
+            changeStatus(BuyStatus.RECRUITING);
+        } else if (status == BuyStatus.RECRUITING && endAt != null && now.isAfter(endAt)) {
+            changeStatus(BuyStatus.CANCELED);
+        }
+    }
+
 
 }

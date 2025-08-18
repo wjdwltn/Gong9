@@ -15,6 +15,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -119,6 +120,15 @@ public class MiniBuyService{
         s3Service.deleteFile(miniBuy.getProductImg());
 
         miniBuyRepository.delete(miniBuy);
+    }
+
+    // 소량공구 상태변화 (스케줄러용)
+    @Transactional
+    public void updateAllMiniBuyStatus() {
+        LocalDateTime now = LocalDateTime.now();
+        List<MiniBuy> miniBuys = miniBuyRepository.findAllToUpdateStatus(now);
+
+        miniBuys.forEach(miniBuy -> miniBuy.updateStatusIfNeeded(now));
     }
 
 

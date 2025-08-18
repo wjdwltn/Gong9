@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 public interface MiniBuyRepository extends JpaRepository<MiniBuy,Long> {
@@ -35,5 +36,12 @@ public interface MiniBuyRepository extends JpaRepository<MiniBuy,Long> {
       AND m.remainCount < m.targetCount
 """)
     int tryIncreaseRemainCount(@Param("miniBuyId") Long miniBuyId);
+
+    // 스케줄러 조회
+    @Query("""
+        SELECT m FROM MiniBuy m
+        WHERE m.status IN('BEFORE_START','RECRUITING')
+    """)
+    List<MiniBuy> findAllToUpdateStatus(@Param("now") LocalDateTime now);
 
 }
