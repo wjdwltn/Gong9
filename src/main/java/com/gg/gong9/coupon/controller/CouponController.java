@@ -37,7 +37,7 @@ public class CouponController {
         return ResponseEntity.ok(couponService.getCoupons(userDetails.getUser()));
     }
 
-    @GetMapping
+    @GetMapping("/available")
     public ResponseEntity<List<CouponListResponseDto>> getAvailableCoupons(
             @AuthenticationPrincipal CustomUserDetails userDetails
     ){

@@ -85,7 +85,7 @@ public class CouponService {
     @Transactional(readOnly = true)
     public List<CouponListResponseDto> getAvailableCoupons(User user) {
 
-        Set<Long> issuedCouponIds = couponIssueRepository.findByUserAndStatus(user, CouponIssueStatus.UNUSED).stream()
+        Set<Long> issuedCouponIds = couponIssueRepository.findByUserAndStatusNot(user, CouponIssueStatus.EXPIRED).stream()
                 .map(issue -> issue.getCoupon().getId())
                 .collect(Collectors.toSet());
 

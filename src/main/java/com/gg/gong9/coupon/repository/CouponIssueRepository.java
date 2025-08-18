@@ -15,7 +15,7 @@ import java.util.List;
 public interface CouponIssueRepository extends JpaRepository<CouponIssue, Long> {
     boolean existsByUserAndCoupon(User user, Coupon coupon);
     List<CouponIssue> findByUser(User user);
-    List<CouponIssue> findByUserAndStatus(User user, CouponIssueStatus status);
+    List<CouponIssue> findByUserAndStatusNot(User user, CouponIssueStatus status);
     List<CouponIssue> findByStatusAndCoupon_EndAtBefore(CouponIssueStatus status, LocalDateTime now);
 
     @Modifying
