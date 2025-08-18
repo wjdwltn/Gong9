@@ -9,7 +9,9 @@ import org.springframework.http.HttpStatus;
 public enum MiniBuyExceptionMessage {
     NO_PERMISSION_MINI_BUY("해당 소량공구에 대한 권한이 없습니다.", HttpStatus.FORBIDDEN),
     INVALID_MINI_BUY_UPDATE_STATUS("모집취소 또는 모집완료 시 소량공구 수정이 불가능합니다.", HttpStatus.BAD_REQUEST),
-    NOT_FOUND_MINI_BUY("해당 소량공구가 존재하지 않습니다.", HttpStatus.NOT_FOUND);
+    NOT_FOUND_MINI_BUY("해당 소량공구가 존재하지 않습니다.", HttpStatus.NOT_FOUND),
+    PARTICIPATION_FAIL("해당 소량공구 참여에 실패했습니다.", HttpStatus.BAD_REQUEST),
+    CANNOT_INCREASE_REMAIN_COUNT("해당 소량공구 취소에 실패했습니다.", HttpStatus.BAD_REQUEST);
 
 
 

@@ -42,12 +42,16 @@ public class MiniBuy extends BaseEntity {
 
     @Column(nullable = false)
     private int targetCount;
+    private int remainCount;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private BuyStatus status;
 
+    @Column(nullable = false)
     private LocalDateTime startAt;
+
+    @Column(nullable = false)
     private LocalDateTime endAt;
 
     private String productImg;
@@ -93,8 +97,8 @@ public class MiniBuy extends BaseEntity {
 
     public void update(MiniBuyUpdateCommand command) {
         switch (this.status) {
-            case BEFORE_START -> updateAllFields(command);
-            case RECRUITING -> updateRecruitingFields(command);
+            case BEFORE_START -> updateBeforeStart(command);
+            case RECRUITING -> updateWhileRecruiting(command);
             case CANCELED, COMPLETED -> throw new MiniBuyException(MiniBuyExceptionMessage.INVALID_MINI_BUY_UPDATE_STATUS);
         }
     }
@@ -107,7 +111,7 @@ public class MiniBuy extends BaseEntity {
         this.status = BuyStatus.CANCELED;
     }
 
-    private void updateAllFields(MiniBuyUpdateCommand command) {
+    private void updateBeforeStart(MiniBuyUpdateCommand command) {
         this.productName = command.productName();
         this.description = command.description();
         this.price = command.price();
@@ -117,11 +121,15 @@ public class MiniBuy extends BaseEntity {
         this.endAt = command.endAt();
     }
 
-    private void updateRecruitingFields(MiniBuyUpdateCommand command) {
+    private void updateWhileRecruiting(MiniBuyUpdateCommand command) {
         this.targetCount = command.targetCount();
         this.description = command.description();
         this.category = command.category();
         this.endAt = command.endAt();
+    }
+
+    public boolean isOpen() {
+        return this.status == BuyStatus.RECRUITING;
     }
 
 
