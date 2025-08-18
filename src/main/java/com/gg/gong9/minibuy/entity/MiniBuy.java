@@ -6,7 +6,6 @@ import com.gg.gong9.global.enums.BuyStatus;
 import com.gg.gong9.global.exception.exceptions.minibuy.MiniBuyException;
 import com.gg.gong9.global.exception.exceptions.minibuy.MiniBuyExceptionMessage;
 import com.gg.gong9.minibuy.controller.command.MiniBuyUpdateCommand;
-import com.gg.gong9.minibuy.controller.dto.MiniBuyCreateRequestDto;
 import com.gg.gong9.user.entity.User;
 import jakarta.persistence.*;
 import lombok.*;
@@ -14,7 +13,6 @@ import lombok.*;
 import java.time.LocalDateTime;
 
 @Entity
-@Setter
 @Getter
 @Builder
 @NoArgsConstructor(access = AccessLevel.PROTECTED)

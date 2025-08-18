@@ -14,7 +14,8 @@ public enum MiniBuyExceptionMessage {
     CANNOT_INCREASE_REMAIN_COUNT("해당 소량공구 취소에 실패했습니다.", HttpStatus.BAD_REQUEST),
     CHAT_LINK_NOT_FOUND("해당 소량공구에 대한 채팅 링크가 존재하지 않습니다.", HttpStatus.NOT_FOUND),
     MINI_BUY_NOT_COMPLETED("현재 해당 소량 공구가 모집 완료 상태가 아닙니다.", HttpStatus.BAD_REQUEST),
-    NOT_A_PARTICIPANT("해당 소량공구의 참여자가 아닙니다.", HttpStatus.BAD_REQUEST)
+    NOT_A_PARTICIPANT("해당 소량공구의 참여자가 아닙니다.", HttpStatus.BAD_REQUEST),
+    SMS_SEND_FAIL("SMS 발송 실패", HttpStatus.INTERNAL_SERVER_ERROR)
     ;
 
 

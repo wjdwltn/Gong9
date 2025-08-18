@@ -5,6 +5,7 @@ import com.gg.gong9.global.exception.exceptions.minibuy.MiniBuyExceptionMessage;
 import com.gg.gong9.global.exception.exceptions.participation.ParticipationException;
 import com.gg.gong9.global.exception.exceptions.participation.ParticipationExceptionMessage;
 import com.gg.gong9.minibuy.entity.MiniBuy;
+import com.gg.gong9.minibuy.event.MiniBuyCompletedEvent;
 import com.gg.gong9.minibuy.repository.MiniBuyRepository;
 import com.gg.gong9.participation.controller.dto.ParticipationCreateRequestDto;
 import com.gg.gong9.participation.controller.dto.ParticipationDetailResponseDto;
@@ -13,17 +14,21 @@ import com.gg.gong9.participation.entity.Participation;
 import com.gg.gong9.participation.repository.ParticipationRepository;
 import com.gg.gong9.user.entity.User;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class ParticipationService {
 
     private final ParticipationRepository participationRepository;
     private final MiniBuyRepository miniBuyRepository;
+    private final ApplicationEventPublisher eventPublisher;
 
 
     // 소량공구 참여 요청
@@ -43,6 +48,11 @@ public class ParticipationService {
 
         Participation participation = Participation.create(user, miniBuy);
         participationRepository.save(participation);
+
+        if (updatedRows > 0) {
+            eventPublisher.publishEvent(new MiniBuyCompletedEvent(miniBuy.getId()));
+            log.info(" 모집 완료 !!, 이벤트 발행 miniBuyId={}", miniBuy.getId());
+        }
 
         return participation;
 
@@ -75,9 +85,11 @@ public class ParticipationService {
         participation.cancel();
         // 원자적 인원 증가
         int updatedRows = miniBuyRepository.tryIncreaseRemainCount(participation.getMiniBuy().getId());
+
         if (updatedRows == 0) { // 업데이트 실패
             throw new MiniBuyException(MiniBuyExceptionMessage.CANNOT_INCREASE_REMAIN_COUNT);
-        }    }
+        }
+    }
 
     // 참여 삭제
     public void deleteParticipation(Long participationId, User user) {
