@@ -55,44 +55,36 @@ public class MiniBuy extends BaseEntity {
     private LocalDateTime endAt;
 
     private String productImg;
+    private String chatLink;
+
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
     private User user;
 
 
-    public MiniBuy(String productName, String productImg, String description, int price, Category category, int targetCount, LocalDateTime startAt, LocalDateTime endAt, User user) {
-        this.productName = productName;
-        this.productImg = productImg;
-        this.description = description;
-        this.price = price;
-        this.category = category;
-        this.targetCount = targetCount;
-        this.startAt = startAt;
-        this.endAt = endAt;
-        this.user = user;
-        this.status = BuyStatus.BEFORE_START;
-    }
-
-    public static MiniBuy create(MiniBuyCreateRequestDto dto, String imageUrl, User user) {
-        return new MiniBuy(
-                dto.productName(),
-                imageUrl,
-                dto.description(),
-                dto.price(),
-                dto.category(),
-                dto.targetCount(),
-                dto.startAt(),
-                dto.endAt(),
-                user
-        );
-    }
-
-    @PrePersist
-    protected void prePersist() {
-        if (this.status == null) {
-            this.status = BuyStatus.BEFORE_START;
-        }
+    public static MiniBuy create(String productName,
+                                 String productImg,
+                                 String description,
+                                 int price,
+                                 Category category,
+                                 int targetCount,
+                                 LocalDateTime startAt,
+                                 LocalDateTime endAt,
+                                 User user) {
+        return MiniBuy.builder()
+                .productName(productName)
+                .productImg(productImg)
+                .description(description)
+                .price(price)
+                .category(category)
+                .targetCount(targetCount)
+                .remainCount(targetCount)
+                .startAt(startAt)
+                .endAt(endAt)
+                .user(user)
+                .status(BuyStatus.BEFORE_START)
+                .build();
     }
 
     public void update(MiniBuyUpdateCommand command) {
@@ -128,12 +120,34 @@ public class MiniBuy extends BaseEntity {
         this.endAt = command.endAt();
     }
 
+    public void validateOwner(User user) {
+        if(!this.user.getId().equals(user.getId())){
+            throw new MiniBuyException(MiniBuyExceptionMessage.NO_PERMISSION_MINI_BUY);
+        }
+    }
+
     public boolean isOpen() {
         return this.status == BuyStatus.RECRUITING;
     }
 
+    public void shareChatLink(String link) {
+        this.chatLink = link;
+    }
+
     public int getJoinedCount() {
         return targetCount - remainCount;
+    }
+
+    public void validateCompleted(){
+        if(this.status != BuyStatus.COMPLETED){
+            throw new MiniBuyException(MiniBuyExceptionMessage.MINI_BUY_NOT_COMPLETED);
+        }
+    }
+
+    public void validateChatLinkExists() {
+        if (this.chatLink == null || this.chatLink.isBlank()) {
+            throw new MiniBuyException(MiniBuyExceptionMessage.CHAT_LINK_NOT_FOUND);
+        }
     }
 
     public void changeStatus(BuyStatus newStatus) {

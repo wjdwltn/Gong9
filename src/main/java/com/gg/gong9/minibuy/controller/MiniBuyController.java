@@ -6,6 +6,7 @@ import com.gg.gong9.global.enums.BuyStatus;
 import com.gg.gong9.global.security.jwt.CustomUserDetails;
 import com.gg.gong9.minibuy.controller.dto.*;
 import com.gg.gong9.minibuy.service.MiniBuyService;
+import com.gg.gong9.user.entity.User;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -56,6 +57,17 @@ public class MiniBuyController {
         return ResponseEntity.ok(response);
     }
 
+    // 참여자 목록 확인
+    @GetMapping("/{miniBuyId}/participants")
+    public ResponseEntity<List<ParticipantInfoResponseDto>> getParticipants(
+            @PathVariable("miniBuyId") Long miniBuyId,
+            @AuthenticationPrincipal CustomUserDetails userDetails
+    ) {
+        User user = userDetails.getUser();
+        List<ParticipantInfoResponseDto> participants = miniBuyService.getParticipants(miniBuyId, user);
+        return ResponseEntity.ok(participants);
+    }
+
     @PutMapping("/{miniBuyId}")
     public ResponseEntity<MiniBuyResponse> updateMiniBuy(
             @PathVariable("miniBuyId") Long miniBuyId,
@@ -92,6 +104,30 @@ public class MiniBuyController {
         miniBuyService.deleteMiniBuy(miniBuyId, userDetails.getUser());
         return ResponseEntity.ok(new MiniBuyResponse("해당 소량 공구가 삭제되었습니다."));
     }
+
+    // 모집 완료 시 링크 공유 (모집자)
+    @PostMapping("/{miniBuyId}/link")
+    public ResponseEntity<MiniBuyResponse> shareChatLink(
+            @PathVariable("miniBuyId") Long miniBuyId,
+            @Valid @RequestBody MiniBuyShareRequestDto requestDto,
+            @AuthenticationPrincipal CustomUserDetails userDetails
+    ){
+        User user = userDetails.getUser();
+        miniBuyService.shareChatLink(miniBuyId,user, requestDto);
+        return ResponseEntity.ok(new MiniBuyResponse("채팅 링크가 공유되었습니다."));
+    }
+
+    // 링크 확인 (참여자)
+    @GetMapping("/{miniBuyId}/link")
+    public ResponseEntity<String> getOpenChatLink(
+            @PathVariable("miniBuyId") Long miniBuyId,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+
+        User user = userDetails.getUser();
+        String link = miniBuyService.getChatLink(miniBuyId, user);
+        return ResponseEntity.ok(link);
+    }
+
 }
 
 

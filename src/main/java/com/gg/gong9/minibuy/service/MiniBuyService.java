@@ -9,6 +9,8 @@ import com.gg.gong9.minibuy.controller.command.MiniBuyUpdateCommand;
 import com.gg.gong9.minibuy.controller.dto.*;
 import com.gg.gong9.minibuy.entity.MiniBuy;
 import com.gg.gong9.minibuy.repository.MiniBuyRepository;
+import com.gg.gong9.participation.entity.ParticipationStatus;
+import com.gg.gong9.participation.repository.ParticipationRepository;
 import com.gg.gong9.user.entity.User;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -26,6 +28,7 @@ public class MiniBuyService{
 
     private final MiniBuyRepository miniBuyRepository;
     private final S3Service s3Service;
+    private final ParticipationRepository participationRepository;
 
     // 소량공구 등록
     @Transactional
@@ -35,17 +38,17 @@ public class MiniBuyService{
                 ? s3Service.uploadFile("miniBuy", file)
                 : null;
 
-        MiniBuy miniBuy = MiniBuy.builder()
-                .productName(dto.productName())
-                .productImg(imageUrl)
-                .description(dto.description())
-                .price(dto.price())
-                .category(dto.category())
-                .targetCount(dto.targetCount())
-                .startAt(dto.startAt())
-                .endAt(dto.endAt())
-                .user(user)
-                .build();
+        MiniBuy miniBuy = MiniBuy.create(
+                dto.productName(),
+                imageUrl,
+                dto.description(),
+                dto.price(),
+                dto.category(),
+                dto.targetCount(),
+                dto.startAt(),
+                dto.endAt(),
+                user
+        );
 
         miniBuyRepository.save(miniBuy);
         return miniBuy.getId();
@@ -75,11 +78,23 @@ public class MiniBuyService{
                 .collect(Collectors.toList());
     }
 
+    // 참여자 목록 조회
+    public List<ParticipantInfoResponseDto> getParticipants(Long miniBuyId, User user) {
+
+        MiniBuy miniBuy = getMiniBuyOrThrow(miniBuyId);
+        miniBuy.validateOwner(user);
+
+        return participationRepository.findByMiniBuyId(miniBuyId)
+                .stream()
+                .map(ParticipantInfoResponseDto::from)
+                .toList();
+    }
+
     // 소량공구 수정
     @Transactional
     public void updateMiniBuy(Long miniBuyId, MiniBuyUpdateRequestDto dto, MultipartFile file, User user) {
         MiniBuy miniBuy = getMiniBuyOrThrow(miniBuyId);
-        validateMiniBuyOwner(miniBuy, user);
+        miniBuy.validateOwner(user);
 
         updateMiniBuyImage(file, miniBuy);
 
@@ -100,7 +115,7 @@ public class MiniBuyService{
     @Transactional
     public void cancelMiniBuy(Long miniBuyId, User user) {
         MiniBuy miniBuy = getMiniBuyOrThrow(miniBuyId);
-        validateMiniBuyOwner(miniBuy, user);
+        miniBuy.validateOwner(user);
         miniBuy.cancel();
     }
 
@@ -115,7 +130,7 @@ public class MiniBuyService{
     @Transactional
     public void deleteMiniBuy(Long miniBuyId, User user) {
         MiniBuy miniBuy = getMiniBuyOrThrow(miniBuyId);
-        validateMiniBuyOwner(miniBuy, user);
+        miniBuy.validateOwner(user);
 
         s3Service.deleteFile(miniBuy.getProductImg());
 
@@ -131,17 +146,33 @@ public class MiniBuyService{
         miniBuys.forEach(miniBuy -> miniBuy.updateStatusIfNeeded(now));
     }
 
+    // 모집 완료 시 링크 공유 (모집자)
+    @Transactional
+    public void shareChatLink(Long miniBuyId, User user, MiniBuyShareRequestDto dto) {
+        MiniBuy miniBuy = getMiniBuyOrThrow(miniBuyId);
+
+        miniBuy.validateOwner(user);
+
+        miniBuy.validateCompleted();
+        miniBuy.shareChatLink(dto.link());
+    }
+
+    // 링크 조회 (참여자)
+    public String getChatLink(Long miniBuyId, User user) {
+        validateParticipant(miniBuyId, user);
+
+        MiniBuy miniBuy = getMiniBuyOrThrow(miniBuyId);
+        miniBuy.validateChatLinkExists();
+
+        return miniBuy.getChatLink();
+    }
+
 
     private MiniBuy getMiniBuyOrThrow(Long miniBuyId){
         return miniBuyRepository.findById(miniBuyId)
                 .orElseThrow(()->new MiniBuyException(MiniBuyExceptionMessage.NOT_FOUND_MINI_BUY));
     }
 
-    private void validateMiniBuyOwner(MiniBuy miniBuy,User user){
-        if (!miniBuy.getUser().getId().equals(user.getId())){
-            throw new MiniBuyException (MiniBuyExceptionMessage.NO_PERMISSION_MINI_BUY);
-        }
-    }
 
     private void updateMiniBuyImage(MultipartFile file, MiniBuy miniBuy) {
         if (file != null && !file.isEmpty()) {
@@ -152,6 +183,16 @@ public class MiniBuyService{
 
             String newImageUrl = s3Service.uploadFile("miniBuy", file);
             miniBuy.updateProductImage(newImageUrl);
+        }
+    }
+
+    // 참가여부 검증
+    private void validateParticipant(Long miniBuyId, User user) {
+        boolean isActiveParticipant = participationRepository
+                .existsByUserAndMiniBuyIdAndStatus(user, miniBuyId, ParticipationStatus.JOINED);
+
+        if (!isActiveParticipant) {
+            throw new MiniBuyException(MiniBuyExceptionMessage.NOT_A_PARTICIPANT);
         }
     }
 
