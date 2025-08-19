@@ -71,20 +71,20 @@ public class GroupBuyService {
                 .map(groupBuy -> {
                     int currentStock = groupBuyRedisService.getCurrentStock(groupBuy.getId());
                     int joinedQuantity = groupBuy.getTotalQuantity() - currentStock;
-                    return new GroupBuyCategoryListResponseDto(groupBuy, currentStock ,joinedQuantity);
+                    return GroupBuyCategoryListResponseDto.from(groupBuy, currentStock, joinedQuantity);
                 })
                 .collect(Collectors.toList());
     }
 
     // 마감 임박 공구 목록 조회
-    public List<GroupBuyUrgentListResponseDto> getGroupBuyUrgentList(BuyStatus status){
+    public List<GroupBuyUrgentListResponseDto> getGroupBuyUrgentList(BuyStatus status) {
         List<GroupBuy> groupBuys = groupBuyRepository.findAllByStatusOrderByEndAtAsc(status);
 
         return groupBuys.stream()
                 .map(groupBuy -> {
                     int currentStock = groupBuyRedisService.getCurrentStock(groupBuy.getId());
                     int joinedQuantity = groupBuy.getTotalQuantity() - currentStock;
-                    return new GroupBuyUrgentListResponseDto(groupBuy, currentStock ,joinedQuantity);
+                    return GroupBuyUrgentListResponseDto.from(groupBuy, currentStock, joinedQuantity);
                 })
                 .collect(Collectors.toList());
     }
@@ -130,9 +130,8 @@ public class GroupBuyService {
     // 내가 등록한 공구 목록 조회
     public List<GroupBuyListResponseDto> getGroupBuyList(User user) {
         return groupBuyRepository.findByUserId(user.getId()).stream()
-                .map(groupBuy -> new GroupBuyListResponseDto(groupBuy, 0)) // joinedQuantity 계산 구매파트 구현 후 수정 (0으로 하드코딩)
+                .map(groupBuy -> GroupBuyListResponseDto.from(groupBuy, 0)) // joinedQuantity 추후 교체
                 .collect(Collectors.toList());
-
     }
 
     // 공구 등록 삭제

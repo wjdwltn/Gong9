@@ -8,7 +8,9 @@ import java.time.LocalDateTime;
 public record GroupBuyCategoryListResponseDto(
         Long groupBuyId,
         String productName,
-        int price,
+        int originalPrice,
+        double discountRate,
+        double discountedPrice,
         BuyStatus status,
         LocalDateTime startAt,
         LocalDateTime endAt,
@@ -16,11 +18,16 @@ public record GroupBuyCategoryListResponseDto(
         int currentStock,
         int joinedQuantity
 ) {
-    public GroupBuyCategoryListResponseDto(GroupBuy groupBuy, int currentStock, int joinedQuantity) {
-        this(
+    public static GroupBuyCategoryListResponseDto from(GroupBuy groupBuy, int currentStock, int joinedQuantity) {
+        int originalPrice = groupBuy.getProduct().getPrice();
+        double discountedPrice = groupBuy.calculateDiscountedPrice(originalPrice, groupBuy.getDiscountRate());
+
+        return new GroupBuyCategoryListResponseDto(
                 groupBuy.getId(),
                 groupBuy.getProduct().getProductName(),
-                groupBuy.getProduct().getPrice(),
+                originalPrice,
+                groupBuy.getDiscountRate(),
+                discountedPrice,
                 groupBuy.getStatus(),
                 groupBuy.getStartAt(),
                 groupBuy.getEndAt(),

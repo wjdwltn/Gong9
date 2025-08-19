@@ -10,11 +10,13 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 public record GroupBuyDetailResponseDto(
-        Long id,
+        Long groupBuyId,
         List<String> productImages,
         String productName,
         String description,
-        int price,
+        int originalPrice,
+        double discountRate,
+        double discountedPrice,
         Category category,
         LocalDateTime startAt,
         LocalDateTime endAt,
@@ -22,18 +24,21 @@ public record GroupBuyDetailResponseDto(
         int limitQuantity,
         int currentStock,
         int joinedQuantity
-){
-    public static GroupBuyDetailResponseDto from(GroupBuy groupBuy,int currentStock, int joinedQuantity){
+) {
+    public static GroupBuyDetailResponseDto from(GroupBuy groupBuy, int currentStock, int joinedQuantity) {
         Product product = groupBuy.getProduct();
 
-        List<String> imageUrls = extractImageUrls(product);
+        int originalPrice = product.getPrice();
+        double discountedPrice = groupBuy.calculateDiscountedPrice(originalPrice, groupBuy.getDiscountRate());
 
         return new GroupBuyDetailResponseDto(
                 groupBuy.getId(),
-                imageUrls,
+                extractImageUrls(product),
                 product.getProductName(),
                 product.getDescription(),
-                product.getPrice(),
+                originalPrice,
+                groupBuy.getDiscountRate(),
+                discountedPrice,
                 product.getCategory(),
                 groupBuy.getStartAt(),
                 groupBuy.getEndAt(),
@@ -49,5 +54,4 @@ public record GroupBuyDetailResponseDto(
                 .map(ProductImg::getProductImageUrl)
                 .toList();
     }
-
 }

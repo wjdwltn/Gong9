@@ -27,10 +27,10 @@ public class GroupBuy extends BaseEntity {
     @Column(name = "group_buy_id", nullable = false)
     private Long id;
 
+    private double discountRate;
+
     private int totalQuantity;
-
     private int remainingQuantity;
-
     private int limitQuantity;
 
     private LocalDateTime startAt;
@@ -52,7 +52,8 @@ public class GroupBuy extends BaseEntity {
 //    private Long version;
 
 
-    private GroupBuy(int totalQuantity, int remainingQuantity ,int limitQuantity, LocalDateTime startAt, LocalDateTime endAt, BuyStatus status, Product product, User user) {
+    private GroupBuy(double discountRate, int totalQuantity, int remainingQuantity ,int limitQuantity, LocalDateTime startAt, LocalDateTime endAt, BuyStatus status, Product product, User user) {
+        this.discountRate = discountRate;
         this.totalQuantity = totalQuantity;
         this.remainingQuantity = remainingQuantity;
         this.limitQuantity = limitQuantity;
@@ -66,6 +67,7 @@ public class GroupBuy extends BaseEntity {
 
     public static GroupBuy create(GroupBuyCreateRequestDto dto, Product product, User user) {
         return new GroupBuy(
+                dto.discountRate(),
                 dto.totalQuantity(),
                 dto.totalQuantity(),
                 dto.limitQuantity(),
@@ -128,4 +130,10 @@ public class GroupBuy extends BaseEntity {
     public void markAsCompleted(){
         this.status = BuyStatus.COMPLETED;
     }
+
+    public double calculateDiscountedPrice(int price, double discountRate) {
+        double discounted = price * (1 - discountRate / 100.0);
+        return Math.round(discounted * 100) / 100.0; // 둘째까지 반올림
+    }
+
 }
