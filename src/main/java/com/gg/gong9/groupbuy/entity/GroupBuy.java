@@ -3,6 +3,7 @@ package com.gg.gong9.groupbuy.entity;
 import com.gg.gong9.global.base.BaseEntity;
 import com.gg.gong9.global.enums.BuyStatus;
 import com.gg.gong9.global.exception.exceptions.groupbuy.GroupBuyException;
+import com.gg.gong9.global.scheduler.StatusUpdatable;
 import com.gg.gong9.groupbuy.controller.dto.GroupBuyCreateRequestDto;
 import com.gg.gong9.groupbuy.controller.command.GroupBuyUpdateCommand;
 import com.gg.gong9.product.entity.Product;
@@ -20,7 +21,7 @@ import static com.gg.gong9.global.exception.exceptions.groupbuy.GroupBuyExceptio
 @Getter
 @Table(name = "group_buy")
 @NoArgsConstructor
-public class GroupBuy extends BaseEntity {
+public class GroupBuy extends BaseEntity implements StatusUpdatable {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -136,4 +137,17 @@ public class GroupBuy extends BaseEntity {
         return Math.round(discounted * 100) / 100.0; // 둘째까지 반올림
     }
 
+    @Override
+    public void changeStatus(BuyStatus newStatus) {
+        this.status = newStatus;
+    }
+
+    @Override
+    public void updateStatusIfNeeded(LocalDateTime now) {
+        if (status == BuyStatus.BEFORE_START && now.isAfter(startAt)) {
+            changeStatus(BuyStatus.RECRUITING);
+        } else if (status == BuyStatus.RECRUITING && now.isAfter(endAt)) {
+            changeStatus(BuyStatus.CANCELED);
+        }
+    }
 }

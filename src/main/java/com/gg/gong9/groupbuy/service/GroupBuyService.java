@@ -23,6 +23,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -142,6 +143,14 @@ public class GroupBuyService {
 
         validateOwner(groupBuy, user);
         groupBuyRepository.delete(groupBuy);
+    }
+
+    // 상태 변경 (스케줄러용)
+    @Transactional
+    public void updateAllGroupBuyStatus(){
+        LocalDateTime now = LocalDateTime.now();
+        List<GroupBuy> groupBuys = groupBuyRepository.findAllToUpdateStatus(now);
+        groupBuys.forEach(groupBuy -> groupBuy.updateStatusIfNeeded(now));
     }
 
     private void validateSeller(User user) {
