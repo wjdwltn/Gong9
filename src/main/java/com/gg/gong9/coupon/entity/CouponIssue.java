@@ -24,7 +24,6 @@ public class CouponIssue extends BaseEntity {
     private Long id;
 
     @Enumerated(EnumType.STRING)
-    @UniqueConstraint(columnNames = {"user_id", "coupon_id"})
     private CouponIssueStatus status;
 
     @ManyToOne(fetch = FetchType.LAZY)
