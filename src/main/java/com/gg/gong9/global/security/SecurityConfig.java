@@ -56,7 +56,8 @@ public class SecurityConfig {
                         .requestMatchers(
                                 "/users/**",
                                 "/auth/**",
-                                "/sms/**"
+                                "/sms/**",
+                                "/group-buy/**"
                         ).permitAll()
                         //.requestMatchers("/admin/**").hasRole("ADMIN")
                         .anyRequest().authenticated()

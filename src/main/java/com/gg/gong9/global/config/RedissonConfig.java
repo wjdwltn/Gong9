@@ -8,12 +8,12 @@ import org.springframework.context.annotation.Configuration;
 
 @Configuration
 public class RedissonConfig {
+    private static final String REDISSON_HOST_PREFIX = "redis://";
 
-    @Bean(destroyMethod = "shutdown")
+    @Bean
     public RedissonClient redissonClient() {
         Config config = new Config();
-        config.useSingleServer()
-                .setAddress("redis://localhost:6379");
+        config.useSingleServer().setAddress(REDISSON_HOST_PREFIX + "localhost:6379");
         return Redisson.create(config);
     }
 }

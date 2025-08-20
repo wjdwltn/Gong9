@@ -14,15 +14,7 @@ import org.aspectj.weaver.ast.Or;
 @Entity
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-@Table(
-        name = "orders",
-        uniqueConstraints = {
-                @UniqueConstraint(
-                        name = "uk_user_groupbuy",
-                        columnNames = {"user_id", "group_buy_id"}
-                )
-        }
-)
+@Table(name = "orders")
 public class Order extends BaseEntity {
 
     @Id

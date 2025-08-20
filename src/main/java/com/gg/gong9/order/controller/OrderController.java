@@ -7,6 +7,7 @@ import com.gg.gong9.order.controller.dto.OrderRequest;
 import com.gg.gong9.order.controller.dto.OrderResponse;
 import com.gg.gong9.order.entity.Order;
 import com.gg.gong9.order.service.OrderService;
+import com.gg.gong9.order.service.concurrency.redis_lau.OrderLauScriptService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -20,15 +21,25 @@ import java.util.List;
 public class OrderController {
 
     private final OrderService orderService;
+    private final OrderLauScriptService orderLauScriptService;
 
     //주문 생성
-    @PostMapping
-    public ResponseEntity<OrderResponse> create(@RequestBody OrderRequest request,
+    @PostMapping("/kafka")
+    public ResponseEntity<String> createOrder(@RequestBody OrderRequest request,
                                                 @AuthenticationPrincipal CustomUserDetails userPrincipal){
         Long userId = userPrincipal.getUser().getId();
-        Order order = orderService.createOrder(userId, request);
-        return ResponseEntity.ok(new OrderResponse(order.getId(),"주문이 생성되었습니다."));
+        orderLauScriptService.tryCreateOrderWithRedisWithKafka(userId, request);
+        return ResponseEntity.ok("주문이 생성되었습니다.");
     }
+
+    //주문 생성
+//    @PostMapping
+//    public ResponseEntity<OrderResponse> create(@RequestBody OrderRequest request,
+//                                                @AuthenticationPrincipal CustomUserDetails userPrincipal){
+//        Long userId = userPrincipal.getUser().getId();
+//        Order order = orderLauScriptService.tryCreateOrderWithRedis(userId, request);
+//        return ResponseEntity.ok(new OrderResponse(order.getId(),"주문이 생성되었습니다."));
+//    }
 
     //주문 목록 조회(내가 주문한 목록)
     @GetMapping("/me")

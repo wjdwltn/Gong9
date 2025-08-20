@@ -48,6 +48,12 @@ spring:
         client-secret: ${KAKAO_SECRET}
         redirect-uri: ${KAKAO_REDIRECT_URI}
 
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS}
+    consumer:
+      auto-offset-reset: earliest
+      enable-auto-commit: false
+
 logging:
   level:
     ROOT: INFO

@@ -7,9 +7,10 @@ import com.gg.gong9.global.exception.exceptions.order.OrderException;
 import com.gg.gong9.global.exception.exceptions.order.OrderExceptionMessage;
 import com.gg.gong9.groupbuy.entity.GroupBuy;
 import com.gg.gong9.groupbuy.repository.GroupBuyRepository;
-import com.gg.gong9.groupbuy.service.GroupBuyService;
+import com.gg.gong9.notification.sms.controller.SmsNotificationType;
+import com.gg.gong9.notification.sms.service.SmsNotificationService;
 import com.gg.gong9.notification.sms.service.SmsService;
-import com.gg.gong9.notification.sms.util.SmsNotificationType;
+import com.gg.gong9.order.controller.dto.OrderCancelledEvent;
 import com.gg.gong9.order.controller.dto.OrderDetailResponse;
 import com.gg.gong9.order.controller.dto.OrderListResponse;
 import com.gg.gong9.order.controller.dto.OrderRequest;
@@ -17,52 +18,57 @@ import com.gg.gong9.order.entity.Order;
 import com.gg.gong9.order.entity.OrderStatus;
 import com.gg.gong9.order.repository.OrderRepository;
 import com.gg.gong9.user.entity.User;
+import com.gg.gong9.user.repository.UserRepository;
 import com.gg.gong9.user.service.UserService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.stream.Collectors;
 
+import static com.gg.gong9.global.exception.exceptions.groupbuy.GroupBuyExceptionMessage.NOT_FOUND_GROUP_BUY;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class OrderService {
 
     private final OrderRepository orderRepository;
     private final UserService userService;
-    private final GroupBuyService groupBuyService;
     private final GroupBuyRepository groupBuyRepository;
-    private final SmsService smsService;
+    private final OrderRedisStockService orderRedisStockService;
+    private final ApplicationEventPublisher eventPublisher;
 
-    //주문 생성
-    public Order createOrder(Long userId, OrderRequest request){
-
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public Order createOrderTransaction(Long userId, OrderRequest request) {
         User user = userService.findByIdOrThrow(userId);
 
         GroupBuy groupBuy = groupBuyRepository.findById(request.groupBuyId())
                 .orElseThrow(()->new GroupBuyException(GroupBuyExceptionMessage.NOT_FOUND_GROUP_BUY));
 
-        //주문 중복 검증
-        existsByUserAndGroupBuy(user,groupBuy);
+        existsByUserAndGroupBuy(user, groupBuy);
 
-        //추후 동시성 문제 고려
-        //인원 확인 후 인원이 다 모이면 공구 모집 완료 메세지 구현
+        groupBuy.decreaseRemainingQuantity(request.quantity());
 
-        Order order = Order.builder()
-                .quantity(request.quantity())
-                .status(OrderStatus.PAYMENT_COMPLETED)
-                .user(user)
-                .groupBuy(groupBuy)
-                .build();
+        return createAndSaveOrder(user, groupBuy, request.quantity());
+    }
 
-        Order savedOrder = orderRepository.save(order);
+    @Transactional
+    public Order tryCreateOrderOnce(Long userId, OrderRequest request) {
+        User user = userService.findByIdOrThrow(userId);
 
-        //주문 성공 메세지
-        smsService.sendByType(user, SmsNotificationType.ORDER_SUCCESS);
+        GroupBuy groupBuy = groupBuyRepository.findById(request.groupBuyId())
+                .orElseThrow(() -> new RuntimeException("GroupBuy not found"));
 
-        return savedOrder;
+        existsByUserAndGroupBuy(user, groupBuy);
+
+        groupBuy.decreaseRemainingQuantity(request.quantity());
+
+        return createAndSaveOrder(user, groupBuy, request.quantity());
     }
 
     //주문 목록 조회(내가 주문한 목록)
@@ -89,18 +95,48 @@ public class OrderService {
 
         order.cancel();
 
-        //추후 수량 감소 로직
-        //환불 등..
+        GroupBuy groupBuy = order.getGroupBuy();
+        groupBuy.increaseRemainingQuantity(order.getQuantity());
+
+        //커밋 이후 취소 후처리(redis 재고 감소 및 취소 문자) 이벤트
+        eventPublisher.publishEvent(new OrderCancelledEvent(userId, groupBuy.getId(), order.getQuantity()));
     }
 
     //주문 삭제(주문 목록에서)
+    @Transactional
     public void deleteOrder(Long userId, Long orderId){
         Order order = findByIdOrThrow(orderId);
         checkOwner(order,userId);
         order.softDelete();
     }
 
+
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void updateOrdersStatusBulk(Long groupBuyId) {
+        orderRepository.updateStatusByGroupBuyId(
+                OrderStatus.CANCELLED,
+                groupBuyId,
+                OrderStatus.PAYMENT_COMPLETED
+        );
+    }
+
     //검즘
+
+    public GroupBuy validateAndGetGroupBuy(OrderRequest request) {
+        GroupBuy groupBuy = groupBuyRepository.findById(request.groupBuyId())
+                .orElseThrow(() -> new GroupBuyException(NOT_FOUND_GROUP_BUY));
+        return groupBuy;
+    }
+
+    public Order createAndSaveOrder(User user, GroupBuy groupBuy, int quantity) {
+        Order order = Order.builder()
+                .quantity(quantity)
+                .status(OrderStatus.PAYMENT_COMPLETED)
+                .user(user)
+                .groupBuy(groupBuy)
+                .build();
+        return orderRepository.save(order);
+    }
 
     private void checkOwner(Order order, Long userId){
         if(!order.getUser().getId().equals(userId)){
@@ -113,8 +149,8 @@ public class OrderService {
                 .orElseThrow(()-> new OrderException(OrderExceptionMessage.ORDER_NOT_FOUND));
     }
 
-    private void existsByUserAndGroupBuy(User user, GroupBuy groupBuy){
-        if(orderRepository.existsByUserAndGroupBuy(user,groupBuy)){
+    public void existsByUserAndGroupBuy(User user, GroupBuy groupBuy){
+        if(orderRepository.existsByUserAndGroupBuyAndStatusNot(user,groupBuy,OrderStatus.CANCELLED)){
             throw new OrderException(OrderExceptionMessage.DUPLICATE_ORDER);
         }
     }
@@ -129,5 +165,9 @@ public class OrderService {
         if (order.getGroupBuy().getStatus() != BuyStatus.RECRUITING) {
             throw new OrderException(OrderExceptionMessage.ORDER_CANNOT_CANCEL);
         }
+    }
+
+    public List<User> findAllUsersByGroupBuy(Long groupBuyId){
+        return orderRepository.findDistinctUsersByOrdersGroupBuyIdAndStatusNotCancelled(groupBuyId, OrderStatus.CANCELLED);
     }
 }
