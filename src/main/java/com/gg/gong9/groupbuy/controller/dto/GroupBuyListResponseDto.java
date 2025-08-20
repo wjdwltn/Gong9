@@ -16,9 +16,10 @@ public record GroupBuyListResponseDto (
         LocalDateTime endAt,
         int totalQuantity,
         int limitQuantity,
+        int currentStock,
         int joinedQuantity
 ) {
-    public static GroupBuyListResponseDto from(GroupBuy groupBuy, int joinedQuantity) {
+    public static GroupBuyListResponseDto from(GroupBuy groupBuy,int currentStock, int joinedQuantity) {
         int originalPrice = groupBuy.getProduct().getPrice();
         double discountedPrice = groupBuy.calculateDiscountedPrice(originalPrice, groupBuy.getDiscountRate());
 
@@ -33,6 +34,7 @@ public record GroupBuyListResponseDto (
                 groupBuy.getEndAt(),
                 groupBuy.getTotalQuantity(),
                 groupBuy.getLimitQuantity(),
+                currentStock,
                 joinedQuantity
         );
     }

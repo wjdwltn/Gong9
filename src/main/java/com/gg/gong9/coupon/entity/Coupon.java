@@ -1,6 +1,8 @@
 package com.gg.gong9.coupon.entity;
 
 import com.gg.gong9.global.base.BaseEntity;
+import com.gg.gong9.global.exception.exceptions.coupon.CouponException;
+import com.gg.gong9.global.exception.exceptions.coupon.CouponExceptionMessage;
 import com.gg.gong9.user.entity.User;
 import jakarta.persistence.*;
 import lombok.Getter;
@@ -42,6 +44,7 @@ public class Coupon extends BaseEntity {
         Coupon coupon = new Coupon();
         coupon.name = name;
         coupon.quantity = quantity;
+        coupon.remainQuantity = quantity;
         coupon.discount = discount;
         coupon.min_order_price = min_order_price;
         coupon.startAt = startAt;
@@ -49,10 +52,10 @@ public class Coupon extends BaseEntity {
         coupon.user = user;
         return coupon;
     }
-
-    public void update(String name, int quantity, int min_order_price,int discount, LocalDateTime startAt, LocalDateTime endAt) {
+    public void update(String name, int quantity, int min_order_price, int discount, LocalDateTime startAt, LocalDateTime endAt) {
         this.name = name;
         this.quantity = quantity;
+        this.remainQuantity = quantity;
         this.min_order_price = min_order_price;
         this.discount = discount;
         this.startAt = startAt;
@@ -61,6 +64,13 @@ public class Coupon extends BaseEntity {
 
     public boolean editable() {
         return LocalDateTime.now().isBefore(this.startAt);
+    }
+
+    public void decreaseRemainQuantity() {
+        if(remainQuantity<=0){
+            throw new CouponException(CouponExceptionMessage.COUPON_OUT_OF_STOCK);
+        }
+        this.remainQuantity--;
     }
 
 }

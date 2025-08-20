@@ -2,6 +2,8 @@ package com.gg.gong9.groupbuy.controller.dto;
 
 import com.gg.gong9.global.enums.BuyStatus;
 import com.gg.gong9.groupbuy.entity.GroupBuy;
+import com.gg.gong9.product.entity.Product;
+import com.gg.gong9.product.entity.ProductImg;
 
 import java.time.LocalDateTime;
 
@@ -11,6 +13,7 @@ public record GroupBuyCategoryListResponseDto(
         int originalPrice,
         double discountRate,
         double discountedPrice,
+        String productImage,
         BuyStatus status,
         LocalDateTime startAt,
         LocalDateTime endAt,
@@ -28,6 +31,7 @@ public record GroupBuyCategoryListResponseDto(
                 originalPrice,
                 groupBuy.getDiscountRate(),
                 discountedPrice,
+                extractFirstImageUrl(groupBuy.getProduct()),
                 groupBuy.getStatus(),
                 groupBuy.getStartAt(),
                 groupBuy.getEndAt(),
@@ -35,5 +39,12 @@ public record GroupBuyCategoryListResponseDto(
                 currentStock,
                 joinedQuantity
         );
+    }
+
+    private static String extractFirstImageUrl(Product product) {
+        return product.getProductImgs().stream()
+                .map(ProductImg::getProductImageUrl)
+                .findFirst()
+                .orElse(null);
     }
 }
