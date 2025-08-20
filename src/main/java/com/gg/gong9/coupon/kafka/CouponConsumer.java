@@ -26,7 +26,10 @@ public class CouponConsumer {
     private final UserRepository userRepository;
     private final CouponIssueRepository couponIssueRepository;
 
-    @KafkaListener(topics = "coupon-issued", groupId = "coupon-issue-group")
+    @KafkaListener(topics = "coupon-issued",
+            groupId = "coupon-issue-group",
+            containerFactory = "couponEventKafkaListenerFactory"
+    )
     @Transactional
     public void consumeCouponIssue(CouponIssuedEvent event) {
 
