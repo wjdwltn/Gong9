@@ -5,6 +5,7 @@ import com.gg.gong9.global.enums.Category;
 import com.gg.gong9.global.enums.BuyStatus;
 import com.gg.gong9.global.exception.exceptions.minibuy.MiniBuyException;
 import com.gg.gong9.global.exception.exceptions.minibuy.MiniBuyExceptionMessage;
+import com.gg.gong9.global.scheduler.StatusUpdatable;
 import com.gg.gong9.minibuy.controller.command.MiniBuyUpdateCommand;
 import com.gg.gong9.user.entity.User;
 import jakarta.persistence.*;
@@ -18,7 +19,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 @Table(name = "mini_buy")
-public class MiniBuy extends BaseEntity {
+public class MiniBuy extends BaseEntity implements StatusUpdatable {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -148,14 +149,12 @@ public class MiniBuy extends BaseEntity {
         }
     }
 
+    @Override
     public void changeStatus(BuyStatus newStatus) {
-        switch (newStatus) {
-            case RECRUITING -> this.status = BuyStatus.RECRUITING;
-            case CANCELED -> this.status = BuyStatus.CANCELED;
-        }
+        this.status = newStatus;
     }
 
-    // 상태 자동 변경
+    @Override
     public void updateStatusIfNeeded(LocalDateTime now) {
         if (status == BuyStatus.BEFORE_START && startAt != null && now.isAfter(startAt)) {
             changeStatus(BuyStatus.RECRUITING);
@@ -163,6 +162,5 @@ public class MiniBuy extends BaseEntity {
             changeStatus(BuyStatus.CANCELED);
         }
     }
-
 
 }

@@ -15,13 +15,14 @@ import java.time.LocalDateTime;
 public class BuyStatusScheduler {
 
     private final GroupBuyService groupBuyService;
-//    private final MiniBuyService miniBuyService;
+    private final MiniBuyService miniBuyService;
 
     @Scheduled(fixedRate = 30000)
     public void updateStatus() {
         log.info(" 상태 업데이트 스케줄러 실행 !!: {} ", LocalDateTime.now());
 
         groupBuyService.updateAllGroupBuyStatus();
+        miniBuyService.updateAllMiniBuyStatus();
 
     }
 }
