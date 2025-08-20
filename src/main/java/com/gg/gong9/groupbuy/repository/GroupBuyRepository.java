@@ -11,12 +11,13 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.jpa.repository.QueryHints;
 import org.springframework.data.repository.query.Param;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
 public interface GroupBuyRepository extends JpaRepository <GroupBuy, Long> {
     List<GroupBuy> findByUserId(Long userId);
-    List<GroupBuy> findByProductCategory(Category category);
+    List<GroupBuy> findByProductCategoryAndStatus(Category category, BuyStatus status);
     List<GroupBuy> findAllByStatusOrderByEndAtAsc(BuyStatus status);
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
@@ -25,4 +26,10 @@ public interface GroupBuyRepository extends JpaRepository <GroupBuy, Long> {
     })
     @Query("SELECT g FROM GroupBuy g WHERE g.id = :id")
     Optional<GroupBuy> findByIdWithPessimisticLock(@Param("id") Long id);
+
+    @Query("""
+        SELECT g FROM GroupBuy g
+        WHERE g.status IN('BEFORE_START','RECRUITING')
+    """)
+    List<GroupBuy> findAllToUpdateStatus(@Param("now") LocalDateTime now);
 }

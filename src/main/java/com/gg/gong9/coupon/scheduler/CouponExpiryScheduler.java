@@ -3,6 +3,7 @@ package com.gg.gong9.coupon.scheduler;
 import com.gg.gong9.coupon.entity.CouponIssue;
 import com.gg.gong9.coupon.entity.CouponIssueStatus;
 import com.gg.gong9.coupon.repository.CouponIssueRepository;
+import com.gg.gong9.coupon.service.RedisCouponService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -16,6 +17,7 @@ import java.util.List;
 public class CouponExpiryScheduler {
 
     private final CouponIssueRepository couponIssueRepository;
+    private final RedisCouponService redisCouponService;
 
     @Transactional
     @Scheduled(cron = "0 0 * * * *")
@@ -25,6 +27,8 @@ public class CouponExpiryScheduler {
 
         for(CouponIssue couponIssue : couponIssues) {
             couponIssue.markAsExpired();
+
+            redisCouponService.deleteCouponKeys(couponIssue.getCoupon().getId(), List.of(couponIssue.getUser().getId()));
         }
     }
 }
