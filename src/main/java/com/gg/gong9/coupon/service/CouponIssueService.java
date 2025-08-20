@@ -44,6 +44,10 @@ public class CouponIssueService {
     public void issueCoupon(Long couponId, User user) {
         redisCouponService.tryIssue(couponId, user);
 
+        Coupon coupon = getCouponOrThrow(couponId);
+        validateNotAlreadyIssued(user, coupon);
+        coupon.decreaseRemainQuantity();
+
         // 트랜잭션 커밋 후에 이벤트 발송
         TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
             @Override
@@ -132,9 +136,8 @@ public class CouponIssueService {
     public List<CouponIssueListResponseDto> getIssuedCoupons(User user) {
         validateUser(user.getId());
 
-        List<CouponIssue> issuedCoupons = couponIssueRepository.findByUser(user);
-
-        return issuedCoupons.stream()
+        return couponIssueRepository.findByUser(user)
+                .stream()
                 .map(CouponIssueListResponseDto::from)
                 .toList();
     }
