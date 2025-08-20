@@ -7,7 +7,10 @@ import com.gg.gong9.global.exception.exceptions.order.OrderException;
 import com.gg.gong9.global.exception.exceptions.order.OrderExceptionMessage;
 import com.gg.gong9.groupbuy.entity.GroupBuy;
 import com.gg.gong9.groupbuy.repository.GroupBuyRepository;
+import com.gg.gong9.notification.sms.controller.SmsNotificationType;
+import com.gg.gong9.notification.sms.service.SmsNotificationService;
 import com.gg.gong9.notification.sms.service.SmsService;
+import com.gg.gong9.order.controller.dto.OrderCancelledEvent;
 import com.gg.gong9.order.controller.dto.OrderDetailResponse;
 import com.gg.gong9.order.controller.dto.OrderListResponse;
 import com.gg.gong9.order.controller.dto.OrderRequest;
@@ -19,6 +22,7 @@ import com.gg.gong9.user.repository.UserRepository;
 import com.gg.gong9.user.service.UserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -37,7 +41,7 @@ public class OrderService {
     private final UserService userService;
     private final GroupBuyRepository groupBuyRepository;
     private final OrderRedisStockService orderRedisStockService;
-
+    private final ApplicationEventPublisher eventPublisher;
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public Order createOrderTransaction(Long userId, OrderRequest request) {
@@ -94,10 +98,8 @@ public class OrderService {
         GroupBuy groupBuy = order.getGroupBuy();
         groupBuy.increaseRemainingQuantity(order.getQuantity());
 
-        //수량 복구
-        orderRedisStockService.increaseStockAndRemoveUserOrder(groupBuy.getId(), userId, order.getQuantity());
-
-        //환불 등..
+        //커밋 이후 취소 후처리(redis 재고 감소 및 취소 문자) 이벤트
+        eventPublisher.publishEvent(new OrderCancelledEvent(userId, groupBuy.getId(), order.getQuantity()));
     }
 
     //주문 삭제(주문 목록에서)
@@ -106,6 +108,16 @@ public class OrderService {
         Order order = findByIdOrThrow(orderId);
         checkOwner(order,userId);
         order.softDelete();
+    }
+
+
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void updateOrdersStatusBulk(Long groupBuyId) {
+        orderRepository.updateStatusByGroupBuyId(
+                OrderStatus.CANCELLED,
+                groupBuyId,
+                OrderStatus.PAYMENT_COMPLETED
+        );
     }
 
     //검즘
