@@ -9,6 +9,7 @@ import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.script.DefaultRedisScript;
 import org.springframework.stereotype.Component;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Slf4j
@@ -33,7 +34,7 @@ public class RedisCouponService {
 
             redis.call("DECR", countKey)
             redis.call("SET", userKey, 1)
-            redis.call("EXPIRE", userKey, 300)
+         
             return 1
          """;
 
@@ -85,6 +86,16 @@ public class RedisCouponService {
 //                default:
 //                    throw new IllegalStateException("예상치 못한 Redis 반환값: " + result);
 //            };
+        }
+
+        // 쿠폰 만료 시 레디스 키 제거
+        public void deleteCouponKeys(Long couponId, List<Long> userIds) {
+            List<String> keys = new ArrayList<>();
+            for (Long userId : userIds) {
+                keys.add(buildUserKey(couponId, userId));
+            }
+            keys.add(buildCountKey(couponId));
+            redisTemplate.delete(keys);
         }
     }
 
