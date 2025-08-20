@@ -11,8 +11,10 @@ import java.time.LocalDateTime;
 public record GroupBuyUrgentListResponseDto(
         Long id,
         String productName,
+        int originalPrice,
+        double discountRate,
+        double discountedPrice,
         String productImage,
-        int price,
         Category category,
         BuyStatus status,
         LocalDateTime startAt,
@@ -21,12 +23,17 @@ public record GroupBuyUrgentListResponseDto(
         int currentStock,
         int joinedQuantity
 ) {
-    public GroupBuyUrgentListResponseDto(GroupBuy groupBuy,int currentStock, int joinedQuantity){
-        this(
+    public static GroupBuyUrgentListResponseDto from(GroupBuy groupBuy, int currentStock, int joinedQuantity) {
+        int originalPrice = groupBuy.getProduct().getPrice();
+        double discountedPrice = groupBuy.calculateDiscountedPrice(originalPrice, groupBuy.getDiscountRate());
+
+        return new GroupBuyUrgentListResponseDto(
                 groupBuy.getId(),
                 groupBuy.getProduct().getProductName(),
+                originalPrice,
+                groupBuy.getDiscountRate(),
+                discountedPrice,
                 extractFirstImageUrl(groupBuy.getProduct()),
-                groupBuy.getProduct().getPrice(),
                 groupBuy.getProduct().getCategory(),
                 groupBuy.getStatus(),
                 groupBuy.getStartAt(),

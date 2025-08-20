@@ -25,6 +25,7 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 
 import java.util.Comparator;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -74,7 +75,7 @@ public class GroupBuyService {
                 .map(groupBuy -> {
                     int currentStock = groupBuyRedisService.getCurrentStock(groupBuy.getId());
                     int joinedQuantity = groupBuy.getTotalQuantity() - currentStock;
-                    return new GroupBuyCategoryListResponseDto(groupBuy, currentStock ,joinedQuantity);
+                    return GroupBuyCategoryListResponseDto.from(groupBuy, currentStock, joinedQuantity);
                 })
                 .toList();
     }
@@ -87,7 +88,7 @@ public class GroupBuyService {
                 .map(groupBuy -> {
                     int currentStock = groupBuyRedisService.getCurrentStock(groupBuy.getId());
                     int joinedQuantity = groupBuy.getTotalQuantity() - currentStock;
-                    return new GroupBuyUrgentListResponseDto(groupBuy, currentStock ,joinedQuantity);
+                    return GroupBuyUrgentListResponseDto.from(groupBuy, currentStock, joinedQuantity);
                 })
                 .sorted(Comparator.comparing(GroupBuyUrgentListResponseDto::endAt)
                         .thenComparing(GroupBuyUrgentListResponseDto::currentStock))
@@ -138,7 +139,7 @@ public class GroupBuyService {
                 .map(groupBuy -> {
                     int currentStock = groupBuyRedisService.getCurrentStock(groupBuy.getId());
                     int joinedQuantity = groupBuy.getTotalQuantity() - currentStock;
-                    return new GroupBuyListResponseDto(groupBuy, currentStock ,joinedQuantity);
+                    return GroupBuyListResponseDto.from(groupBuy, currentStock ,joinedQuantity);
                 })
                 .toList();
     }
@@ -165,7 +166,7 @@ public class GroupBuyService {
                 ))
                 .toList();
 
-        return GroupBuySellerDetailResponseDto.from(groupBuy,currentStock,joinedQuantity,orderUsers);
+        return GroupBuySellerDetailResponseDto.from(groupBuy, currentStock, joinedQuantity, orderUsers);
     }
 
     // 공구 등록 삭제
@@ -176,6 +177,14 @@ public class GroupBuyService {
 
         validateOwner(groupBuy, user);
         groupBuyRepository.delete(groupBuy);
+    }
+
+    // 상태 변경 (스케줄러용)
+    @Transactional
+    public void updateAllGroupBuyStatus(){
+        LocalDateTime now = LocalDateTime.now();
+        List<GroupBuy> groupBuys = groupBuyRepository.findAllToUpdateStatus(now);
+        groupBuys.forEach(groupBuy -> groupBuy.updateStatusIfNeeded(now));
     }
 
     private void validateSeller(User user) {
