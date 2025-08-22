@@ -57,12 +57,13 @@ public class SecurityConfig {
                                 "/users/**",
                                 "/auth/**",
                                 "/sms/**",
-                                "/group-buy/**"
+                                "/group-buy/**",
+                                "/actuator/**"
                         ).permitAll()
                         //.requestMatchers("/admin/**").hasRole("ADMIN")
                         .anyRequest().authenticated()
                 )
-                .addFilterBefore(jwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class);;
+                .addFilterBefore(jwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
