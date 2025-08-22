@@ -14,4 +14,8 @@ public class Address {
 
     private String detail;
 
+    public String toFormattedString() {
+        return String.format("(%s) %s", postcode, detail);
+    }
+
 }

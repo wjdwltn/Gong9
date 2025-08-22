@@ -17,7 +17,7 @@ public record MiniBuyCategoryResponseDto(
         int joinedCount
 
 ){
-    public static MiniBuyCategoryResponseDto from(MiniBuy miniBuy, int joinedCount) {
+    public static MiniBuyCategoryResponseDto from(MiniBuy miniBuy) {
         return new MiniBuyCategoryResponseDto(
                 miniBuy.getId(),
                 miniBuy.getProductName(),
@@ -27,7 +27,7 @@ public record MiniBuyCategoryResponseDto(
                 miniBuy.getStartAt(),
                 miniBuy.getEndAt(),
                 miniBuy.getTargetCount(),
-                joinedCount
+                miniBuy.getJoinedCount()
         );
     }
 }

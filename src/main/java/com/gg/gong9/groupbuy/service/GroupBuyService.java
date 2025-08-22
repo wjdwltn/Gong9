@@ -7,13 +7,13 @@ import com.gg.gong9.global.exception.exceptions.product.ProductExceptionMessage;
 import com.gg.gong9.groupbuy.controller.command.GroupBuyUpdateCommand;
 import com.gg.gong9.groupbuy.controller.dto.*;
 import com.gg.gong9.groupbuy.entity.GroupBuy;
-import com.gg.gong9.groupbuy.handler.GroupBuyStatusHandler;
 import com.gg.gong9.global.enums.BuyStatus;
 import com.gg.gong9.groupbuy.repository.GroupBuyRepository;
 import com.gg.gong9.groupbuy.controller.dto.GroupBuyListResponseDto;
-import com.gg.gong9.notification.sms.service.SmsService;
-import com.gg.gong9.order.repository.OrderRepository;
 import com.gg.gong9.global.enums.Category;
+import com.gg.gong9.order.controller.dto.OrderUserInfo;
+import com.gg.gong9.order.entity.Order;
+import com.gg.gong9.order.repository.OrderRepository;
 import com.gg.gong9.product.entity.Product;
 import com.gg.gong9.product.repository.ProductRepository;
 import com.gg.gong9.user.entity.User;
@@ -21,8 +21,11 @@ import com.gg.gong9.user.entity.UserRole;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 
+import java.util.Comparator;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -33,8 +36,9 @@ public class GroupBuyService {
 
     private final GroupBuyRepository groupBuyRepository;
     private final ProductRepository productRepository;
-    private final GroupBuyStatusHandler groupBuyStatusHandler;
     private final GroupBuyRedisService groupBuyRedisService;
+    private final ApplicationEventPublisher eventPublisher;
+    private final OrderRepository orderRepository;
 
     // 공구 등록
     @Transactional
@@ -65,15 +69,15 @@ public class GroupBuyService {
 
     // 카테고리별 공구 목록 조회
     public List<GroupBuyCategoryListResponseDto> getGroupBuyCategoryList(Category category){
-        List<GroupBuy> groupBuys = groupBuyRepository.findByProductCategory(category);
+        List<GroupBuy> groupBuys = groupBuyRepository.findByProductCategoryAndStatus(category,BuyStatus.RECRUITING);
 
         return groupBuys.stream()
                 .map(groupBuy -> {
                     int currentStock = groupBuyRedisService.getCurrentStock(groupBuy.getId());
                     int joinedQuantity = groupBuy.getTotalQuantity() - currentStock;
-                    return new GroupBuyCategoryListResponseDto(groupBuy, currentStock ,joinedQuantity);
+                    return GroupBuyCategoryListResponseDto.from(groupBuy, currentStock, joinedQuantity);
                 })
-                .collect(Collectors.toList());
+                .toList();
     }
 
     // 마감 임박 공구 목록 조회
@@ -84,9 +88,11 @@ public class GroupBuyService {
                 .map(groupBuy -> {
                     int currentStock = groupBuyRedisService.getCurrentStock(groupBuy.getId());
                     int joinedQuantity = groupBuy.getTotalQuantity() - currentStock;
-                    return new GroupBuyUrgentListResponseDto(groupBuy, currentStock ,joinedQuantity);
+                    return GroupBuyUrgentListResponseDto.from(groupBuy, currentStock, joinedQuantity);
                 })
-                .collect(Collectors.toList());
+                .sorted(Comparator.comparing(GroupBuyUrgentListResponseDto::endAt)
+                        .thenComparing(GroupBuyUrgentListResponseDto::currentStock))
+                .toList();
     }
 
     // 공구 정보 수정
@@ -122,17 +128,45 @@ public class GroupBuyService {
 
         groupBuyRedisService.deleteGroupBuyData(groupBuyId);
 
-        //모집중일때만 환불 및 취소 메세지 보내기
-        groupBuyStatusHandler.handleCancelled(groupBuy);
+        // 트랜잭션 커밋 후 후처리 이벤트
+        eventPublisher.publishEvent(new GroupBuyCancelledEvent(groupBuy.getId()));
     }
 
 
-    // 내가 등록한 공구 목록 조회
+    // 내가 등록한 공구 목록 조회(판매자)
     public List<GroupBuyListResponseDto> getGroupBuyList(User user) {
         return groupBuyRepository.findByUserId(user.getId()).stream()
-                .map(groupBuy -> new GroupBuyListResponseDto(groupBuy, 0)) // joinedQuantity 계산 구매파트 구현 후 수정 (0으로 하드코딩)
-                .collect(Collectors.toList());
+                .map(groupBuy -> {
+                    int currentStock = groupBuyRedisService.getCurrentStock(groupBuy.getId());
+                    int joinedQuantity = groupBuy.getTotalQuantity() - currentStock;
+                    return GroupBuyListResponseDto.from(groupBuy, currentStock ,joinedQuantity);
+                })
+                .toList();
+    }
 
+    // 내가 등록한 공구 상세 조회(판매자) -> 판매 데이터 통계 : 주문자 목록, 판매 금액, 건수
+    public GroupBuySellerDetailResponseDto getGroupBuySellerDetail(Long groupBuyId, User user) {
+        GroupBuy groupBuy = getGroupBuyOrThrow(groupBuyId);
+
+        validateOwner(groupBuy, user);
+
+        int currentStock = groupBuyRedisService.getCurrentStock(groupBuy.getId()); //남은 재고
+        int joinedQuantity = groupBuy.getTotalQuantity() - currentStock; // 총 구매 수량
+
+        List<Order> orders = orderRepository.findByGroupBuyId(groupBuyId);
+
+        List<OrderUserInfo> orderUsers = orders.stream()
+                .map(order -> new OrderUserInfo(
+                        order.getId(),
+                        order.getUser().getUsername(),
+                        order.getUser().getPhoneNumber(),
+                        order.getUser().getAddress().toFormattedString(),
+                        order.getQuantity(),
+                        order.getStatus()
+                ))
+                .toList();
+
+        return GroupBuySellerDetailResponseDto.from(groupBuy, currentStock, joinedQuantity, orderUsers);
     }
 
     // 공구 등록 삭제
@@ -143,6 +177,14 @@ public class GroupBuyService {
 
         validateOwner(groupBuy, user);
         groupBuyRepository.delete(groupBuy);
+    }
+
+    // 상태 변경 (스케줄러용)
+    @Transactional
+    public void updateAllGroupBuyStatus(){
+        LocalDateTime now = LocalDateTime.now();
+        List<GroupBuy> groupBuys = groupBuyRepository.findAllToUpdateStatus(now);
+        groupBuys.forEach(groupBuy -> groupBuy.updateStatusIfNeeded(now));
     }
 
     private void validateSeller(User user) {

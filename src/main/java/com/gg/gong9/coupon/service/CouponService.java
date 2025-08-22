@@ -21,6 +21,7 @@ import com.gg.gong9.user.entity.UserRole;
 import com.gg.gong9.user.repository.UserRepository;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -34,6 +35,7 @@ public class CouponService {
 
     private final CouponRepository couponRepository;
     private final UserRepository userRepository;
+    private final StringRedisTemplate redisTemplate;
     private final CouponIssueRepository couponIssueRepository;
     private final CouponRedisStockService couponRedisService;
     private final GroupBuyService groupBuyService;
@@ -43,9 +45,8 @@ public class CouponService {
     @Transactional
     public Coupon createCoupon(CouponCreateRequestDto dto, User user) {
 
-        validateAdmin(user);
-
         validateUserExists(user.getId());
+        validateAdmin(user);
 
         validateStartBeforeEnd(dto.startAt(), dto.endAt());
 
@@ -62,10 +63,15 @@ public class CouponService {
                 user,
                 groupBuy
         );
+        Coupon savedCoupon = couponRepository.save(coupon);
 
-        couponRedisService.initializeStockAndUserOrders(coupon.getId(),dto.quantity());
+        initCouponStockInRedis(savedCoupon.getId(), dto.quantity());
 
-        return couponRepository.save(coupon);
+        return savedCoupon;
+
+//        couponRedisService.initializeStockAndUserOrders(coupon.getId(),dto.quantity());
+
+//        return couponRepository.save(coupon);
 
     }
 
@@ -166,5 +172,10 @@ public class CouponService {
         if (endAt.isBefore(startAt)) {
             throw new CouponException(CouponExceptionMessage.INVALID_END_TIME);
         }
+    }
+
+    public void initCouponStockInRedis(Long couponId, int quantity) {
+        String countKey = "coupon:%d:quantity".formatted(couponId);
+        redisTemplate.opsForValue().set(countKey, String.valueOf(quantity));
     }
 }

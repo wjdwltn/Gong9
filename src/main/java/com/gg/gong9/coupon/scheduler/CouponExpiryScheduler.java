@@ -5,6 +5,8 @@ import com.gg.gong9.coupon.entity.CouponIssue;
 import com.gg.gong9.coupon.entity.CouponIssueStatus;
 import com.gg.gong9.coupon.entity.CouponStatus;
 import com.gg.gong9.coupon.repository.CouponIssueRepository;
+import com.gg.gong9.coupon.service.RedisCouponService;
+import jakarta.transaction.Transactional;
 import com.gg.gong9.coupon.repository.CouponRepository;
 import com.gg.gong9.coupon.service.CouponIssueService;
 import com.gg.gong9.coupon.service.CouponRedisStockService;
@@ -21,6 +23,8 @@ import java.util.List;
 @Slf4j
 public class CouponExpiryScheduler {
 
+    private final CouponIssueRepository couponIssueRepository;
+    private final RedisCouponService redisCouponService;
     private final CouponIssueService couponIssueService;
     private final CouponRepository couponRepository;
     private final CouponRedisStockService couponRedisService;
@@ -51,6 +55,10 @@ public class CouponExpiryScheduler {
                     couponRedisService.deleteGroupBuyData(couponId);
                 }
 
+        for(CouponIssue couponIssue : couponIssues) {
+            couponIssue.markAsExpired();
+
+            redisCouponService.deleteCouponKeys(couponIssue.getCoupon().getId(), List.of(couponIssue.getUser().getId()));
             }catch (Exception e) {
                 log.error("[쿠폰 만료 실패] couponId={}", couponId, e);
             }

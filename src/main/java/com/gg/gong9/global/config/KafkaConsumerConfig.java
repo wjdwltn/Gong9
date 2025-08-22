@@ -1,5 +1,6 @@
 package com.gg.gong9.global.config;
 
+import com.gg.gong9.coupon.controller.dto.CouponIssuedEvent;
 import com.gg.gong9.global.exception.BaseException;
 import com.gg.gong9.global.exception.exceptions.groupbuy.GroupBuyException;
 import com.gg.gong9.global.exception.exceptions.order.OrderException;
@@ -17,6 +18,7 @@ import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.listener.ContainerProperties;
 import org.springframework.kafka.listener.DeadLetterPublishingRecoverer;
 import org.springframework.kafka.listener.DefaultErrorHandler;
+import org.springframework.kafka.support.serializer.JsonDeserializer;
 import org.springframework.util.backoff.FixedBackOff;
 import org.apache.kafka.common.TopicPartition;
 
@@ -110,4 +112,24 @@ public class KafkaConsumerConfig {
 
         return handler;
     }
+
+    @Bean
+    public ConsumerFactory<String, CouponIssuedEvent> couponEventConsumerFactory() {
+        return new DefaultKafkaConsumerFactory<>(
+                consumerConfigs(),
+                new org.apache.kafka.common.serialization.StringDeserializer(),
+                new JsonDeserializer<>(CouponIssuedEvent.class, false)
+        );
+    }
+
+    @Bean
+    public ConcurrentKafkaListenerContainerFactory<String, CouponIssuedEvent> couponEventKafkaListenerFactory() {
+        ConcurrentKafkaListenerContainerFactory<String, CouponIssuedEvent> factory =
+                new ConcurrentKafkaListenerContainerFactory<>();
+        factory.setConsumerFactory(couponEventConsumerFactory());
+        factory.getContainerProperties().setAckMode(ContainerProperties.AckMode.MANUAL);
+        return factory;
+    }
+
+
 }

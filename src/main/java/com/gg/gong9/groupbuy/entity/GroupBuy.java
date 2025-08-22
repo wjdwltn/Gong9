@@ -3,6 +3,7 @@ package com.gg.gong9.groupbuy.entity;
 import com.gg.gong9.global.base.BaseEntity;
 import com.gg.gong9.global.enums.BuyStatus;
 import com.gg.gong9.global.exception.exceptions.groupbuy.GroupBuyException;
+import com.gg.gong9.global.scheduler.StatusUpdatable;
 import com.gg.gong9.groupbuy.controller.dto.GroupBuyCreateRequestDto;
 import com.gg.gong9.groupbuy.controller.command.GroupBuyUpdateCommand;
 import com.gg.gong9.product.entity.Product;
@@ -20,17 +21,17 @@ import static com.gg.gong9.global.exception.exceptions.groupbuy.GroupBuyExceptio
 @Getter
 @Table(name = "group_buy")
 @NoArgsConstructor
-public class GroupBuy extends BaseEntity {
+public class GroupBuy extends BaseEntity implements StatusUpdatable {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "group_buy_id", nullable = false)
     private Long id;
 
+    private double discountRate;
+
     private int totalQuantity;
-
     private int remainingQuantity;
-
     private int limitQuantity;
 
     private LocalDateTime startAt;
@@ -52,7 +53,8 @@ public class GroupBuy extends BaseEntity {
 //    private Long version;
 
 
-    private GroupBuy(int totalQuantity, int remainingQuantity ,int limitQuantity, LocalDateTime startAt, LocalDateTime endAt, BuyStatus status, Product product, User user) {
+    private GroupBuy(double discountRate, int totalQuantity, int remainingQuantity ,int limitQuantity, LocalDateTime startAt, LocalDateTime endAt, BuyStatus status, Product product, User user) {
+        this.discountRate = discountRate;
         this.totalQuantity = totalQuantity;
         this.remainingQuantity = remainingQuantity;
         this.limitQuantity = limitQuantity;
@@ -66,6 +68,7 @@ public class GroupBuy extends BaseEntity {
 
     public static GroupBuy create(GroupBuyCreateRequestDto dto, Product product, User user) {
         return new GroupBuy(
+                dto.discountRate(),
                 dto.totalQuantity(),
                 dto.totalQuantity(),
                 dto.limitQuantity(),
@@ -127,5 +130,24 @@ public class GroupBuy extends BaseEntity {
 
     public void markAsCompleted(){
         this.status = BuyStatus.COMPLETED;
+    }
+
+    public double calculateDiscountedPrice(int price, double discountRate) {
+        double discounted = price * (1 - discountRate / 100.0);
+        return Math.round(discounted * 100) / 100.0; // 둘째까지 반올림
+    }
+
+    @Override
+    public void changeStatus(BuyStatus newStatus) {
+        this.status = newStatus;
+    }
+
+    @Override
+    public void updateStatusIfNeeded(LocalDateTime now) {
+        if (status == BuyStatus.BEFORE_START && now.isAfter(startAt)) {
+            changeStatus(BuyStatus.RECRUITING);
+        } else if (status == BuyStatus.RECRUITING && now.isAfter(endAt)) {
+            changeStatus(BuyStatus.CANCELED);
+        }
     }
 }
