@@ -4,7 +4,6 @@ import com.gg.gong9.coupon.controller.dto.CouponCreateRequestDto;
 import com.gg.gong9.coupon.controller.dto.CouponListResponseDto;
 import com.gg.gong9.coupon.controller.dto.CouponUpdateRequestDto;
 import com.gg.gong9.coupon.entity.Coupon;
-import com.gg.gong9.coupon.entity.CouponIssue;
 import com.gg.gong9.coupon.entity.CouponIssueStatus;
 import com.gg.gong9.coupon.entity.CouponStatus;
 import com.gg.gong9.coupon.repository.CouponIssueRepository;
@@ -21,7 +20,6 @@ import com.gg.gong9.user.entity.UserRole;
 import com.gg.gong9.user.repository.UserRepository;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -35,9 +33,8 @@ public class CouponService {
 
     private final CouponRepository couponRepository;
     private final UserRepository userRepository;
-    private final StringRedisTemplate redisTemplate;
     private final CouponIssueRepository couponIssueRepository;
-    private final CouponRedisStockService couponRedisService;
+    private final RedisCouponService redisCouponService;
     private final GroupBuyService groupBuyService;
 
 
@@ -65,14 +62,9 @@ public class CouponService {
         );
         Coupon savedCoupon = couponRepository.save(coupon);
 
-        initCouponStockInRedis(savedCoupon.getId(), dto.quantity());
+        redisCouponService.initCouponStockInRedis(savedCoupon.getId(), dto.quantity());
 
         return savedCoupon;
-
-//        couponRedisService.initializeStockAndUserOrders(coupon.getId(),dto.quantity());
-
-//        return couponRepository.save(coupon);
-
     }
 
     // 판매자 쿠폰 목록 조회
@@ -80,7 +72,7 @@ public class CouponService {
     public List<CouponListResponseDto> getCoupons(User user) {
         return couponRepository.findByUserId(user.getId()).stream()
                 .map(coupon -> {
-                    int currentStock = couponRedisService.getCurrentStock(coupon.getId()); //현재 재고
+                    int currentStock = redisCouponService.getCurrentStock(coupon.getId()); //현재 재고
                     int usedQuantity = coupon.getQuantity() - currentStock; // 총 구매 수량
                     return new CouponListResponseDto(coupon, currentStock, usedQuantity,true);
                 })
@@ -99,7 +91,7 @@ public class CouponService {
 
         return availableCoupons.stream()
                 .map(coupon -> {
-                    int currentStock = couponRedisService.getCurrentStock(coupon.getId());
+                    int currentStock = redisCouponService.getCurrentStock(coupon.getId());
                     int usedQuantity = coupon.getQuantity() - currentStock;
                     boolean alreadyIssued = issuedCouponIds.contains(coupon.getId()); // 발급 여부
                     return new CouponListResponseDto(coupon, currentStock, usedQuantity,alreadyIssued);
@@ -141,7 +133,7 @@ public class CouponService {
         }
         couponRepository.delete(coupon);
 
-        couponRedisService.deleteGroupBuyData(couponId);
+        redisCouponService.deleteCouponKeys(couponId);
     }
 
 
@@ -172,10 +164,5 @@ public class CouponService {
         if (endAt.isBefore(startAt)) {
             throw new CouponException(CouponExceptionMessage.INVALID_END_TIME);
         }
-    }
-
-    public void initCouponStockInRedis(Long couponId, int quantity) {
-        String countKey = "coupon:%d:quantity".formatted(couponId);
-        redisTemplate.opsForValue().set(countKey, String.valueOf(quantity));
     }
 }

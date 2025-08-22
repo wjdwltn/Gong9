@@ -56,7 +56,7 @@ public class CouponController {
 
     @DeleteMapping("/{couponId}")
     public ResponseEntity<CouponResponse> deleteCoupon(
-            @PathVariable Long couponId,
+            @PathVariable("couponId") Long couponId,
             @AuthenticationPrincipal CustomUserDetails userDetails
     ){
         couponService.deleteCoupon(couponId, userDetails.getUser());
