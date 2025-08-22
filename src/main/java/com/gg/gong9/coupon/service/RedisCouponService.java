@@ -9,7 +9,6 @@ import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.script.DefaultRedisScript;
 import org.springframework.stereotype.Component;
 
-import java.util.ArrayList;
 import java.util.List;
 
 @Slf4j
@@ -20,10 +19,11 @@ public class RedisCouponService {
     private final StringRedisTemplate redisTemplate;
 
     private static final String LUA_SCRIPT = """
-            local userKey = KEYS[1]
+            local userSetKey = KEYS[1]
             local countKey = KEYS[2]
+            local userId = ARGV[1]
 
-            if redis.call("EXISTS", userKey) == 1 then
+            if redis.call("SISMEMBER", userSetKey, userId) == 1 then
                 return 0
             end
 
@@ -33,33 +33,63 @@ public class RedisCouponService {
             end
 
             redis.call("DECR", countKey)
-            redis.call("SET", userKey, 1)
+            redis.call("SADD", userSetKey, userId)
          
             return 1
          """;
 
-    private static final String USER_KEY_PATTERN = "coupon:%d:user:%d";
+    private static final String USER_SET_KEY_PATTERN = "coupon:%d:users";
     private static final String COUNT_KEY_PATTERN = "coupon:%d:quantity";
 
-    public boolean tryIssue(Long couponId, User user) {
-        String userKey = buildUserKey(couponId, user.getId());
-        String countKey = buildCountKey(couponId);
+    private final DefaultRedisScript<Long> issueScript = new DefaultRedisScript<>() {{
+        setScriptText(LUA_SCRIPT);
+        setResultType(Long.class);
+    }};
 
-        DefaultRedisScript<Long> script = new DefaultRedisScript<>();
-        script.setScriptText(LUA_SCRIPT);
-        script.setResultType(Long.class);
+    // 쿠폰 발급 로직
+    public void tryIssue(Long couponId, User user) {
+        Long result = redisTemplate.execute(
+                issueScript,
+                List.of(buildUserSetKey(couponId), buildCountKey(couponId)),
+                String.valueOf(user.getId())
+        );
 
-        Long result = redisTemplate.execute(script, List.of(userKey, countKey));
-
-        if (result == null) {
-            throw new IllegalStateException("Redis 실행 실패");
-        }
-
-       return handleRedisResult(result.intValue());
+        handleRedisResult(result.intValue());
     }
 
-    private String buildUserKey(Long couponId, Long userId) {
-        return String.format(USER_KEY_PATTERN, couponId, userId);
+
+    // 초기화
+    public void initCouponStockInRedis(Long couponId, int quantity) {
+        redisTemplate.delete(buildUserSetKey(couponId));
+        redisTemplate.opsForValue().set(buildCountKey(couponId), String.valueOf(quantity));
+    }
+
+    // 조회
+    public int getCurrentStock(Long couponId) {
+        String stock = redisTemplate.opsForValue().get(buildCountKey(couponId));
+        return stock != null ? Integer.parseInt(stock) : 0;
+    }
+
+    public int getCurrentIssueUserCount(Long couponId) {
+        Long count = redisTemplate.opsForSet().size(buildUserSetKey(couponId));
+        return count != null ? count.intValue() : 0;
+    }
+
+//    public boolean hasUserIssued(Long couponId, Long userId) {
+//        Boolean exists = redisTemplate.opsForSet().isMember(buildUserSetKey(couponId), String.valueOf(userId));
+//        return exists != null && exists;
+//    }
+
+    // 삭제
+    public void deleteCouponKeys(Long couponId) {
+        redisTemplate.delete(List.of(
+                        buildCountKey(couponId),
+                        buildUserSetKey(couponId)
+                ));
+        }
+
+    private String buildUserSetKey(Long couponId) {
+        return String.format(USER_SET_KEY_PATTERN, couponId);
     }
 
     private String buildCountKey(Long couponId) {
@@ -88,15 +118,7 @@ public class RedisCouponService {
 //            };
         }
 
-        // 쿠폰 만료 시 레디스 키 제거
-        public void deleteCouponKeys(Long couponId, List<Long> userIds) {
-            List<String> keys = new ArrayList<>();
-            for (Long userId : userIds) {
-                keys.add(buildUserKey(couponId, userId));
-            }
-            keys.add(buildCountKey(couponId));
-            redisTemplate.delete(keys);
-        }
+
     }
 
 

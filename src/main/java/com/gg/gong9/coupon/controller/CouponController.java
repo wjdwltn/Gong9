@@ -37,6 +37,13 @@ public class CouponController {
         return ResponseEntity.ok(couponService.getCoupons(userDetails.getUser()));
     }
 
+    @GetMapping("/available")
+    public ResponseEntity<List<CouponListResponseDto>> getAvailableCoupons(
+            @AuthenticationPrincipal CustomUserDetails userDetails
+    ){
+        return ResponseEntity.ok(couponService.getAvailableCoupons(userDetails.getUser()));
+    }
+
     @PutMapping("/{couponId}")
     public ResponseEntity<CouponResponse> updateCoupon(
             @PathVariable Long couponId,
@@ -49,7 +56,7 @@ public class CouponController {
 
     @DeleteMapping("/{couponId}")
     public ResponseEntity<CouponResponse> deleteCoupon(
-            @PathVariable Long couponId,
+            @PathVariable("couponId") Long couponId,
             @AuthenticationPrincipal CustomUserDetails userDetails
     ){
         couponService.deleteCoupon(couponId, userDetails.getUser());

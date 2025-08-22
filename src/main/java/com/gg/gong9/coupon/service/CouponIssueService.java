@@ -4,6 +4,8 @@ import com.gg.gong9.coupon.controller.dto.CouponIssueListResponseDto;
 import com.gg.gong9.coupon.controller.dto.CouponIssuedEvent;
 import com.gg.gong9.coupon.entity.Coupon;
 import com.gg.gong9.coupon.entity.CouponIssue;
+import com.gg.gong9.coupon.entity.CouponIssueStatus;
+import com.gg.gong9.coupon.entity.CouponStatus;
 import com.gg.gong9.coupon.kafka.CouponProducer;
 import com.gg.gong9.coupon.repository.CouponIssueRepository;
 import com.gg.gong9.coupon.repository.CouponRepository;
@@ -11,6 +13,8 @@ import com.gg.gong9.global.exception.exceptions.coupon.CouponException;
 import com.gg.gong9.global.exception.exceptions.coupon.CouponExceptionMessage;
 import com.gg.gong9.global.exception.exceptions.user.UserException;
 import com.gg.gong9.global.exception.exceptions.user.UserExceptionMessage;
+import com.gg.gong9.groupbuy.entity.GroupBuy;
+import com.gg.gong9.groupbuy.service.GroupBuyService;
 import com.gg.gong9.global.manager.RedissonLockManager;
 import com.gg.gong9.user.entity.User;
 import com.gg.gong9.user.repository.UserRepository;
@@ -36,6 +40,7 @@ public class CouponIssueService {
 //    private final CouponIssueTransactionalService couponIssueTransactionalService;
     private final RedisCouponService redisCouponService;
     private final CouponProducer couponProducer;
+    private final GroupBuyService groupBuyService;
 
     private final String topic = "coupon-issued";
 
@@ -144,11 +149,14 @@ public class CouponIssueService {
 
     // 쿠폰 사용 완료처리 (결제 후 완료로..) UNUSED → USED
     @Transactional
-    public void useCoupon(Long couponId, User user) {
-
+    public void useCoupon(Long couponId, User user, Long groupBuyId) {
         CouponIssue couponIssue = getCouponIssue(couponId);
 
         validateCouponOwner(couponIssue, user.getId());
+
+        GroupBuy groupBuy = groupBuyService.getGroupBuyOrThrow(groupBuyId);
+
+        validateCouponGroupBuy(couponIssue, groupBuy);
 
         couponIssue.validateUsable(); //(스케줄러 지연 보완)
         couponIssue.markAsUsed();
@@ -181,5 +189,31 @@ public class CouponIssueService {
         if (couponIssueRepository.existsByUserAndCoupon(user, coupon)) {
             throw new CouponException(CouponExceptionMessage.COUPON_ALREADY_ISSUED);
         }
+    }
+
+    private void validateCouponGroupBuy(CouponIssue couponIssue, GroupBuy orderGroupBuy) {
+        if(!couponIssue.getCoupon().getGroupBuy().getId().equals(orderGroupBuy.getId())){
+            throw new CouponException(CouponExceptionMessage.COUPON_GROUP_BUY_MISMATCH);
+        }
+    }
+
+    @Transactional
+    public int expireCouponIssues(Coupon coupon) {
+        int updatedCount = couponIssueRepository.updateStatusToExpired(coupon.getId(), CouponIssueStatus.EXPIRED);
+
+        if (coupon.getStatus() != CouponStatus.EXPIRED) {
+            coupon.markAsExpired();
+        }
+
+        return updatedCount;
+    }
+
+    @Transactional
+    public int expireCouponIssuesBulk(List<Long> couponIds) {
+        int updatedCount = couponIssueRepository.updateStatusToExpiredBulk(couponIds,CouponIssueStatus.EXPIRED);
+
+        couponRepository.updateStatusToExpiredBulk(couponIds,CouponStatus.EXPIRED);
+
+        return updatedCount;
     }
 }
