@@ -57,13 +57,16 @@ public class SecurityConfig {
                                 "/users/**",
                                 "/auth/**",
                                 "/sms/**",
+                                "/group-buy/**",
+                                "/actuator/**",
+                                "/sms/**",
                                 "/swagger-ui/**",
                                 "/v3/api-docs/**"
                         ).permitAll()
                         //.requestMatchers("/admin/**").hasRole("ADMIN")
                         .anyRequest().authenticated()
                 )
-                .addFilterBefore(jwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class);;
+                .addFilterBefore(jwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }

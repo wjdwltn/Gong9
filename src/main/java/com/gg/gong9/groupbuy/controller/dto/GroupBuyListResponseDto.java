@@ -6,26 +6,35 @@ import com.gg.gong9.groupbuy.entity.GroupBuy;
 import java.time.LocalDateTime;
 
 public record GroupBuyListResponseDto (
-        Long id,
+        Long groupBuyId,
         String productName,
-        int price,
+        int originalPrice,
+        double discountRate,
+        double discountedPrice,
         BuyStatus status,
         LocalDateTime startAt,
         LocalDateTime endAt,
         int totalQuantity,
         int limitQuantity,
+        int currentStock,
         int joinedQuantity
 ) {
-    public GroupBuyListResponseDto(GroupBuy groupBuy, int joinedQuantity){
-        this(
+    public static GroupBuyListResponseDto from(GroupBuy groupBuy,int currentStock, int joinedQuantity) {
+        int originalPrice = groupBuy.getProduct().getPrice();
+        double discountedPrice = groupBuy.calculateDiscountedPrice(originalPrice, groupBuy.getDiscountRate());
+
+        return new GroupBuyListResponseDto(
                 groupBuy.getId(),
                 groupBuy.getProduct().getProductName(),
-                groupBuy.getProduct().getPrice(),
+                originalPrice,
+                groupBuy.getDiscountRate(),
+                discountedPrice,
                 groupBuy.getStatus(),
                 groupBuy.getStartAt(),
                 groupBuy.getEndAt(),
                 groupBuy.getTotalQuantity(),
                 groupBuy.getLimitQuantity(),
+                currentStock,
                 joinedQuantity
         );
     }

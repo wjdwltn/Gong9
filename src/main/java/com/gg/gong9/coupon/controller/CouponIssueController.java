@@ -23,15 +23,27 @@ public class CouponIssueController {
 
     // 쿠폰 발급
     @PostMapping("/{couponId}/issue")
-    public ResponseEntity<CouponIssueCreateResponseDto> issueCoupon(
-            @PathVariable Long couponId,
+    public ResponseEntity<String> issueCoupon(
+            @PathVariable("couponId") Long couponId,
             @AuthenticationPrincipal CustomUserDetails userDetails
     ) {
-        CouponIssue saved = couponIssueService.issueCoupon(couponId, userDetails.getUser());
+        couponIssueService.issueCoupon(couponId, userDetails.getUser());
 
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(new CouponIssueCreateResponseDto(saved.getId(), "쿠폰 발급이 완료되었습니다."));
+                .body("쿠폰 발급이 완료되었습니다.");
     }
+
+    // 그 외 (kafka 처리 전)
+//    @PostMapping("/{couponId}/issue")
+//    public ResponseEntity<CouponIssueCreateResponseDto> issueCoupon(
+//            @PathVariable("couponId") Long couponId,
+//            @AuthenticationPrincipal CustomUserDetails userDetails
+//    ) {
+//        CouponIssue saved = couponIssueService.issueCoupon(couponId, userDetails.getUser());
+//
+//        return ResponseEntity.status(HttpStatus.CREATED)
+//                .body(new CouponIssueCreateResponseDto(saved.getId(), "쿠폰 발급이 완료되었습니다."));
+//    }
 
     // 자신이 발급받은 쿠폰 목록 조회
     @GetMapping("/issued")
@@ -46,9 +58,10 @@ public class CouponIssueController {
     @PutMapping("/{couponIssueId}/used")
     public ResponseEntity<CouponIssueResponse> usedCoupon(
             @PathVariable Long couponIssueId,
+            @RequestParam Long groupBuyId,
             @AuthenticationPrincipal CustomUserDetails userDetails
     ){
-        couponIssueService.useCoupon(couponIssueId, userDetails.getUser());
+        couponIssueService.useCoupon(couponIssueId, userDetails.getUser(), groupBuyId);
         return ResponseEntity.ok(new CouponIssueResponse("쿠폰 사용이 정상적으로 처리되었습니다."));
     }
 

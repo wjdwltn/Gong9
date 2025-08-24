@@ -1,5 +1,6 @@
 package com.gg.gong9.order.service.concurrency.strategy;
 
+import com.gg.gong9.coupon.service.CouponIssueService;
 import com.gg.gong9.global.enums.BuyStatus;
 import com.gg.gong9.global.exception.exceptions.groupbuy.GroupBuyException;
 import com.gg.gong9.global.handler.RedissonHandler;
@@ -39,6 +40,7 @@ public class OrderConcurrencyService {
     private final GroupBuyRepository gbRepository;
     private final RedissonHandler redissonHandler;
     private final SmsService smsService;
+    private final CouponIssueService couponIssueService;
 
     //낙관적 락(기본)
     public Order createOrder_Opti(Long userId, OrderRequest request) {
@@ -96,6 +98,10 @@ public class OrderConcurrencyService {
 
         orderService.existsByUserAndGroupBuy(user, groupBuy); // 중복 주문 검사
         groupBuy.decreaseRemainingQuantity(request.quantity()); // db 재고 감소
+
+        if(request.couponIssueId() != null){
+            couponIssueService.useCoupon(request.couponIssueId(), user, groupBuy.getId());
+        }
 
         Order order = orderService.createAndSaveOrder(user, groupBuy, request.quantity());//주문 저장
 

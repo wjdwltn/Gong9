@@ -18,7 +18,7 @@ public record MiniBuyUrgentListResponseDto(
         int targetCount,
         int joinedCount
 ) {
-    public static MiniBuyUrgentListResponseDto from(MiniBuy miniBuy, int joinedCount) {
+    public static MiniBuyUrgentListResponseDto from(MiniBuy miniBuy) {
         return new MiniBuyUrgentListResponseDto(
                 miniBuy.getId(),
                 miniBuy.getProductName(),
@@ -29,7 +29,7 @@ public record MiniBuyUrgentListResponseDto(
                 miniBuy.getStartAt(),
                 miniBuy.getEndAt(),
                 miniBuy.getTargetCount(),
-                joinedCount
+                miniBuy.getJoinedCount()
         );
     }
 }

@@ -18,14 +18,16 @@ import java.util.Optional;
 public interface OrderRepository extends JpaRepository<Order, Long> {
     List<Order> findAllByUserId(Long userId);
 
+    List<Order> findByGroupBuyId(Long groupBuyId);
+
     Optional<Order> findByIdAndIsDeletedFalse(Long id);
 
     boolean existsByUserAndGroupBuyAndStatusNot(User user, GroupBuy groupBuy, OrderStatus status);
 
-    @Modifying
+    @Modifying(clearAutomatically = true)
     @Transactional
-    @Query("UPDATE Order o SET o.status = :newStatus WHERE o.groupBuy.id = :groupBuyId AND o.status <> :newStatus")
-    void updateStatusByGroupBuyId(@Param("newStatus") OrderStatus newStatus, @Param("groupBuyId") Long groupBuyId);
+    @Query("UPDATE Order o SET o.status = :newStatus WHERE o.groupBuy.id = :groupBuyId AND o.status =  :currentStatus")
+    void updateStatusByGroupBuyId(@Param("newStatus") OrderStatus newStatus, @Param("groupBuyId") Long groupBuyId, @Param("currentStatus") OrderStatus currentStatus);
 
     @Query("select distinct o.user from Order o where o.groupBuy.id = :groupBuyId and o.isDeleted = false and o.status <> :cancelledStatus")
     List<User> findDistinctUsersByOrdersGroupBuyIdAndStatusNotCancelled(

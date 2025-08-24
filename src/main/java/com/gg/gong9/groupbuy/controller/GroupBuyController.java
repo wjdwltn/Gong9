@@ -86,6 +86,16 @@ public class GroupBuyController {
         return ResponseEntity.ok(response);
     }
 
+    // 내가 등록한 공구 목록 조회
+    @GetMapping("/me/{groupBuyId}")
+    public ResponseEntity<GroupBuySellerDetailResponseDto> getGroupBuySellerDetail(
+            @PathVariable Long groupBuyId,
+            @AuthenticationPrincipal CustomUserDetails userDetails
+    ){
+        GroupBuySellerDetailResponseDto response = groupBuyService.getGroupBuySellerDetail(groupBuyId,userDetails.getUser());
+        return ResponseEntity.ok(response);
+    }
+
     // 공구 등록 삭제
     @DeleteMapping("/{groupBuyId}")
     public ResponseEntity<GroupBuyResponse> deleteGroupBuy(
